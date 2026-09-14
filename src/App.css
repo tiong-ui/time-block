@@ -362,8 +362,26 @@ h1 {
 }
 
 .kid-bar-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.kid-bar-avatar {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: transform 0.12s ease;
+}
+
+.kid-bar-avatar:hover {
+  transform: scale(1.15);
 }
 
 .kid-bar-actions {
