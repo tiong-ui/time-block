@@ -3,6 +3,7 @@
 // A handful of ~4-5 second tunes, one picked at random each time, so it
 // doesn't feel identical every session.
 let ctx = null
+let master = null
 
 function getContext() {
   if (!ctx) {
@@ -11,6 +12,24 @@ function getContext() {
     ctx = new AudioCtx()
   }
   return ctx
+}
+
+// Everything runs through a compressor, which is what lets the interval
+// cues be driven hard enough to hear across a room without the peaks
+// clipping into a crackle. Phones cap the final volume themselves, so
+// the aim is to use all the headroom below that, not to exceed it.
+function getMaster(audioCtx) {
+  if (!master) {
+    const compressor = audioCtx.createDynamicsCompressor()
+    compressor.threshold.value = -18
+    compressor.knee.value = 12
+    compressor.ratio.value = 8
+    compressor.attack.value = 0.002
+    compressor.release.value = 0.15
+    compressor.connect(audioCtx.destination)
+    master = compressor
+  }
+  return master
 }
 
 // Note names -> frequencies (Hz), for readability below.
@@ -142,7 +161,7 @@ function scheduleTune(audioCtx, tune, startAt) {
       gain.gain.exponentialRampToValueAtTime(0.001, start + duration)
 
       osc.connect(gain)
-      gain.connect(audioCtx.destination)
+      gain.connect(getMaster(audioCtx))
 
       osc.start(start)
       osc.stop(start + duration)
@@ -180,23 +199,37 @@ export function scheduleChime(delayMs) {
 // Interval cues for HIIT: a rising double beep to start working, a
 // softer note to drop into rest. Short and distinct — they fire
 // mid-workout, when nobody is looking at the screen.
+// Three sharp rising beeps to start work, two firm low ones to drop
+// into rest. Square waves carry further than sine at the same level,
+// and the count differs as well as the pitch — so the two are told
+// apart by ear alone, mid-burpee, without looking.
+const CUE_PEAK = 0.85
+
 function scheduleCue(audioCtx, kind, startAt) {
   const notes =
     kind === 'work'
-      ? [{ freq: G5, time: 0, duration: 0.12 }, { freq: C6, time: 0.13, duration: 0.22 }]
-      : [{ freq: E5, time: 0, duration: 0.3 }]
+      ? [
+          { freq: G5, time: 0, duration: 0.13 },
+          { freq: C6, time: 0.17, duration: 0.13 },
+          { freq: E6, time: 0.34, duration: 0.32 },
+        ]
+      : [
+          { freq: E5, time: 0, duration: 0.18 },
+          { freq: C5, time: 0.22, duration: 0.34 },
+        ]
 
   return notes.map(({ freq, time, duration }) => {
     const start = startAt + time
     const osc = audioCtx.createOscillator()
     const gain = audioCtx.createGain()
-    osc.type = kind === 'work' ? 'triangle' : 'sine'
+    osc.type = 'square'
     osc.frequency.value = freq
     gain.gain.setValueAtTime(0, start)
-    gain.gain.linearRampToValueAtTime(0.25, start + 0.02)
+    gain.gain.linearRampToValueAtTime(CUE_PEAK, start + 0.01)
+    gain.gain.setValueAtTime(CUE_PEAK, start + duration * 0.6)
     gain.gain.exponentialRampToValueAtTime(0.001, start + duration)
     osc.connect(gain)
-    gain.connect(audioCtx.destination)
+    gain.connect(getMaster(audioCtx))
     osc.start(start)
     osc.stop(start + duration)
     return { osc, gain }
