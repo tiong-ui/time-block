@@ -38,11 +38,48 @@ export function storeSeconds(key, value) {
   }
 }
 
-// Works out the interval that follows `kind`, clipped so the last one
-// never runs past the end of the session — a 30s work interval with 12s
-// of session left becomes a 12s one rather than overrunning.
-export function nextInterval({ kind, exerciseSec, restSec, sessionLeftMs }) {
-  const nextKind = kind === 'work' ? 'rest' : 'work'
-  const fullMs = (nextKind === 'work' ? exerciseSec : restSec) * 1000
-  return { kind: nextKind, durationMs: Math.max(0, Math.min(fullMs, sessionLeftMs)) }
+// Where the work/rest cycle stands `elapsedMs` into a session.
+//
+// Derived from elapsed time rather than flipped step by step, which
+// matters a lot: after the screen has been off for several intervals,
+// or after a reload, this lands on the right interval in one go
+// instead of catching up one flip per frame.
+//
+// `sessionRemainingMs` clips the last interval so it never runs past
+// the end of the session.
+export function intervalAt({ elapsedMs, exerciseSec, restSec, sessionRemainingMs = Infinity }) {
+  const workMs = exerciseSec * 1000
+  const restMs = restSec * 1000
+  const cycleMs = workMs + restMs
+  const into = elapsedMs % cycleMs
+  const round = Math.floor(elapsedMs / cycleMs) + 1
+
+  const working = into < workMs
+  const totalMs = working ? workMs : restMs
+  const remainingMs = working ? workMs - into : cycleMs - into
+
+  return {
+    kind: working ? 'work' : 'rest',
+    totalMs,
+    remainingMs: Math.max(0, Math.min(remainingMs, sessionRemainingMs)),
+    round,
+  }
+}
+
+// Every work/rest switch still to come, as offsets from now — used to
+// schedule the audio cues ahead of time on the Web Audio clock so they
+// fire even with the screen off.
+export function upcomingCues({ elapsedMs, exerciseSec, restSec, sessionRemainingMs }) {
+  const cues = []
+  const current = intervalAt({ elapsedMs, exerciseSec, restSec })
+  let at = current.remainingMs
+  let kind = current.kind === 'work' ? 'rest' : 'work'
+
+  // The session end gets its own chime, so stop short of it.
+  while (at < sessionRemainingMs) {
+    cues.push({ atMs: at, kind })
+    at += (kind === 'work' ? exerciseSec : restSec) * 1000
+    kind = kind === 'work' ? 'rest' : 'work'
+  }
+  return cues
 }

@@ -11,7 +11,8 @@ import {
   loadStoredExerciseSec,
   loadStoredRestSec,
   storeSeconds,
-  nextInterval,
+  intervalAt,
+  upcomingCues,
 } from './hiit.js'
 import { STARS_PER_SESSION } from './stars.js'
 import { errorDetail } from './errorMessage.js'
@@ -25,7 +26,8 @@ import StarJarScreen from './StarJarScreen.jsx'
 import EditAvatarScreen from './EditAvatarScreen.jsx'
 import JarDropAnimation from './JarDropAnimation.jsx'
 import PieTimer from './PieTimer'
-import { playChime, playIntervalCue } from './chime'
+import { playIntervalCue, scheduleChime, scheduleIntervalCues } from './chime'
+import { saveSession, clearSession, loadSession, restoredTimerState } from './session.js'
 import './App.css'
 
 // Outer stages: 'family-setup' (no family code yet) -> 'kid-picker'
@@ -97,23 +99,26 @@ export default function App() {
     familyCodeRef.current = familyCode
   }, [familyCode])
 
-  const [phase, setPhase] = useState('select')
-  const [totalMs, setTotalMs] = useState(0)
-  const [remainingMs, setRemainingMs] = useState(0)
-  const [paused, setPaused] = useState(false)
+  // A timer left running when the page was closed. Read once, at the
+  // first render, so the restored session seeds the state below rather
+  // than arriving late and overwriting it.
+  const [opening] = useState(() => restoredTimerState(loadSession()))
+  const restoredSession = opening.session
+
+  const [phase, setPhase] = useState(opening.phase)
+  const [totalMs, setTotalMs] = useState(opening.totalMs)
+  const [remainingMs, setRemainingMs] = useState(opening.remainingMs)
+  const [paused, setPaused] = useState(opening.paused)
   const [colorTheme, setColorTheme] = useState(loadStoredTheme)
-  const [activityId, setActivityId] = useState(loadStoredActivity)
-  const [exerciseSec, setExerciseSec] = useState(loadStoredExerciseSec)
-  const [restSec, setRestSec] = useState(loadStoredRestSec)
+  const [activityId, setActivityId] = useState(() => restoredSession?.activityId ?? loadStoredActivity())
+  const [exerciseSec, setExerciseSec] = useState(() => restoredSession?.exerciseSec ?? loadStoredExerciseSec())
+  const [restSec, setRestSec] = useState(() => restoredSession?.restSec ?? loadStoredRestSec())
 
   // HIIT only: which half of the cycle we're in, and how far through it.
   const [intervalKind, setIntervalKind] = useState('work')
   const [intervalRemainingMs, setIntervalRemainingMs] = useState(0)
   const [intervalTotalMs, setIntervalTotalMs] = useState(0)
   const [roundNumber, setRoundNumber] = useState(1)
-  const intervalEndAtRef = useRef(0)
-  const intervalTotalMsRef = useRef(0)
-  const intervalKindRef = useRef('work')
 
   // Subscribe to this family's kid list once we have a code, and
   // auto-advance out of the loading state the first time data arrives.
@@ -216,8 +221,58 @@ export default function App() {
 
   // Wall-clock bookkeeping so the countdown stays accurate even if the
   // tab is backgrounded and rAF/timers get throttled.
-  const endAtRef = useRef(0)
+  const startedAtRef = useRef(restoredSession?.startedAt ?? 0)
+  const endAtRef = useRef(restoredSession?.endAt ?? 0)
+  const pausedAtRef = useRef(restoredSession?.pausedAt ?? 0)
   const rafRef = useRef(null)
+  const cancelAudioRef = useRef(null)
+  // Set when a session that finished while the app was closed still
+  // owes its stars, which can only be paid once the kid data loads.
+  const owedStarsRef = useRef(opening.owesStars)
+
+  function cancelScheduledAudio() {
+    if (cancelAudioRef.current) {
+      cancelAudioRef.current()
+      cancelAudioRef.current = null
+    }
+  }
+
+  // Books the finishing melody — and, for HIIT, every work/rest switch —
+  // on the Web Audio clock up front. That clock keeps running while the
+  // tab is hidden, so the timer is still heard with the screen off,
+  // rather than everything firing at once when you come back.
+  function scheduleAudioFrom(now) {
+    cancelScheduledAudio()
+    const sessionRemainingMs = endAtRef.current - now
+    if (sessionRemainingMs <= 0) return
+
+    const cancels = [scheduleChime(sessionRemainingMs)]
+    if (isHiitRef.current) {
+      cancels.push(
+        scheduleIntervalCues(
+          upcomingCues({
+            elapsedMs: now - startedAtRef.current,
+            exerciseSec: exerciseSecRef.current,
+            restSec: restSecRef.current,
+            sessionRemainingMs,
+          }),
+        ),
+      )
+    }
+    cancelAudioRef.current = () => cancels.forEach(cancel => cancel())
+  }
+
+  function persistSession(pausedAt = null) {
+    saveSession({
+      startedAt: startedAtRef.current,
+      endAt: endAtRef.current,
+      totalMs,
+      activityId,
+      exerciseSec,
+      restSec,
+      pausedAt,
+    })
+  }
 
   function startTimer(minutes) {
     const ms = minutes * 60 * 1000
@@ -226,14 +281,11 @@ export default function App() {
     setRemainingMs(ms)
     setPaused(false)
     setStarsResult(null)
+    startedAtRef.current = now
     endAtRef.current = now + ms
 
     if (activityId === HIIT_ACTIVITY_ID) {
-      // Open on a work interval, never running past the session end.
       const workMs = Math.min(exerciseSec * 1000, ms)
-      intervalKindRef.current = 'work'
-      intervalTotalMsRef.current = workMs
-      intervalEndAtRef.current = now + workMs
       setIntervalTotalMs(workMs)
       setIntervalKind('work')
       setIntervalRemainingMs(workMs)
@@ -241,28 +293,76 @@ export default function App() {
       playIntervalCue('work')
     }
 
+    saveSession({
+      startedAt: now,
+      endAt: now + ms,
+      totalMs: ms,
+      activityId,
+      exerciseSec,
+      restSec,
+      pausedAt: null,
+    })
+    scheduleAudioFrom(now)
     setPhase('running')
   }
 
   function togglePause() {
-    setPaused(prev => {
-      const resuming = prev
-      if (resuming) {
-        // Recompute both clocks from where we left off.
-        const now = Date.now()
-        endAtRef.current = now + remainingMs
-        intervalEndAtRef.current = now + intervalRemainingMs
-      }
-      // When pausing, the countdown loop simply stops running, so
-      // remainingMs stays frozen at its last tick value.
-      return !prev
-    })
+    const now = Date.now()
+    if (paused) {
+      // Shift both clocks forward by however long we sat paused, so
+      // elapsed time — which drives the whole interval cycle — stays
+      // honest even across a reload while paused.
+      const pausedForMs = now - pausedAtRef.current
+      startedAtRef.current += pausedForMs
+      endAtRef.current += pausedForMs
+      persistSession(null)
+      scheduleAudioFrom(now)
+      setPaused(false)
+    } else {
+      pausedAtRef.current = now
+      cancelScheduledAudio()
+      persistSession(now)
+      setPaused(true)
+    }
   }
 
   function stopTimer() {
+    cancelScheduledAudio()
+    clearSession()
     setPhase('select')
     setPaused(false)
   }
+
+  function awardStars() {
+    const before = activeKidRef.current?.totalStars ?? 0
+    setStarsResult({ before, after: before + STARS_PER_SESSION, starsAdded: STARS_PER_SESSION })
+    if (activeKidIdRef.current && familyCodeRef.current) {
+      addStars(familyCodeRef.current, activeKidIdRef.current, STARS_PER_SESSION).catch(err => {
+        console.error('Failed to save stars:', err)
+      })
+    }
+  }
+
+  function finishSession() {
+    clearSession()
+    cancelScheduledAudio()
+    setPhase('done')
+    if (activeKidRef.current) {
+      awardStars()
+    } else {
+      // Restored on a cold start: the kid data hasn't arrived yet, so
+      // settle up once it does.
+      owedStarsRef.current = true
+    }
+  }
+
+  // A session that finished while the app was closed still owes its
+  // stars — pay them as soon as we know whose they are.
+  useEffect(() => {
+    if (!owedStarsRef.current || !activeKid) return
+    owedStarsRef.current = false
+    awardStars()
+  }, [activeKid])
 
   // Countdown loop.
   useEffect(() => {
@@ -274,38 +374,24 @@ export default function App() {
       setRemainingMs(msLeft)
 
       if (msLeft > 0 && isHiitRef.current) {
-        let intervalLeft = intervalEndAtRef.current - now
-        if (intervalLeft <= 0) {
-          // Flip to the other half of the cycle, clipped so the last
-          // interval never runs past the end of the session.
-          const { kind: nextKind, durationMs: nextMs } = nextInterval({
-            kind: intervalKindRef.current,
-            exerciseSec: exerciseSecRef.current,
-            restSec: restSecRef.current,
-            sessionLeftMs: msLeft,
-          })
-          intervalKindRef.current = nextKind
-          intervalTotalMsRef.current = nextMs
-          intervalEndAtRef.current = now + nextMs
-          intervalLeft = nextMs
-          setIntervalTotalMs(nextMs)
-          setIntervalKind(nextKind)
-          if (nextKind === 'work') setRoundNumber(r => r + 1)
-          playIntervalCue(nextKind)
-        }
-        setIntervalRemainingMs(intervalLeft)
+        // Read straight off the elapsed clock, so coming back from a
+        // dark screen lands on the right interval in one step.
+        const current = intervalAt({
+          elapsedMs: now - startedAtRef.current,
+          exerciseSec: exerciseSecRef.current,
+          restSec: restSecRef.current,
+          sessionRemainingMs: msLeft,
+        })
+        setIntervalKind(current.kind)
+        setIntervalTotalMs(current.totalMs)
+        setIntervalRemainingMs(current.remainingMs)
+        setRoundNumber(current.round)
       }
 
       if (msLeft <= 0) {
-        setPhase('done')
-        playChime()
-        const before = activeKidRef.current?.totalStars ?? 0
-        setStarsResult({ before, after: before + STARS_PER_SESSION, starsAdded: STARS_PER_SESSION })
-        if (activeKidIdRef.current && familyCodeRef.current) {
-          addStars(familyCodeRef.current, activeKidIdRef.current, STARS_PER_SESSION).catch(err => {
-            console.error('Failed to save stars:', err)
-          })
-        }
+        // The finishing melody was booked on the audio clock when the
+        // session began, so there's nothing to play here.
+        finishSession()
         return
       }
       rafRef.current = requestAnimationFrame(tick)
@@ -313,6 +399,22 @@ export default function App() {
 
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
+    // finishSession is redefined every render but only touches refs and
+    // setters, so re-arming the loop for it would just restart the frame
+    // callback for no reason.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, paused])
+
+  // After a restore the audio schedule has to be rebuilt from scratch —
+  // the previous page's booked cues died with it.
+  const audioRestoredRef = useRef(false)
+  useEffect(() => {
+    if (audioRestoredRef.current) return
+    if (phase !== 'running' || paused) return
+    audioRestoredRef.current = true
+    if (!cancelAudioRef.current) scheduleAudioFrom(Date.now())
+    // scheduleAudioFrom is redefined each render but reads only refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, paused])
 
   const fraction = isHiit
