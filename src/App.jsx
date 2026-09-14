@@ -665,14 +665,26 @@ function RunningScreen({
     setPeeking(false)
   }
 
-  // Rest reads as a breather, so it borrows the calmer paused tone.
+  // Work and rest get their own hues — dial, track and label together —
+  // so the state is unmistakable mid-workout, and distinct from paused.
   const resting = isHiit && intervalKind === 'rest'
-  const pieColor = paused || resting ? 'var(--accent-pale)' : 'var(--accent)'
+  let pieColor = 'var(--accent)'
+  let trackColor = 'var(--accent-soft)'
+  let stateInk = null
+
+  if (paused) {
+    pieColor = 'var(--accent-pale)'
+  } else if (isHiit) {
+    pieColor = resting ? 'var(--hiit-rest)' : 'var(--hiit-work)'
+    trackColor = resting ? 'var(--hiit-rest-track)' : 'var(--hiit-work-track)'
+    stateInk = pieColor
+  }
+
   let hintKey = paused ? 'paused' : 'stayFocused'
   if (isHiit && !paused) hintKey = resting ? 'restNow' : 'workNow'
 
   return (
-    <div className="screen running-screen">
+    <div className="screen running-screen" style={stateInk ? { '--state-ink': stateInk } : undefined}>
       {isHiit && !paused && (
         <p className="round-tag"><T k="roundNumber" vars={{ number: roundNumber }} /></p>
       )}
@@ -694,7 +706,7 @@ function RunningScreen({
         <PieTimer
           fraction={fraction}
           color={pieColor}
-          trackColor="var(--accent-soft)"
+          trackColor={trackColor}
           overlayText={peeking ? formatTime(remainingMs) : null}
           size={300}
         />

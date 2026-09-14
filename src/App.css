@@ -110,6 +110,28 @@ html {
   font-size: 118.75%;
 }
 
+/* ── HIIT interval colours ──
+   Work and rest are states, not decoration, so they get their own hues
+   rather than two shades of the accent — which previously made rest
+   look identical to paused. Warm/cool is the usual effort-vs-recovery
+   pairing and the two are opposite enough to read at a glance across
+   the room, whichever colour theme is picked. */
+:root {
+  --hiit-work: #f4511e;
+  --hiit-work-track: #ffe0d4;
+  --hiit-rest: #0d9aba;
+  --hiit-rest-track: #d3f0f7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --hiit-work: #ff7043;
+    --hiit-work-track: #45241a;
+    --hiit-rest: #4dd0e1;
+    --hiit-rest-track: #12363e;
+  }
+}
+
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 60%);
@@ -261,7 +283,7 @@ h1 {
 }
 
 .round-tag {
-  color: var(--accent-soft-ink);
+  color: var(--state-ink, var(--accent-soft-ink));
   font-size: 0.9rem;
   font-weight: 800;
   letter-spacing: 0.03em;
@@ -371,7 +393,7 @@ h1 {
 }
 
 .running-hint {
-  color: var(--text-muted);
+  color: var(--state-ink, var(--text-muted));
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 4px;
