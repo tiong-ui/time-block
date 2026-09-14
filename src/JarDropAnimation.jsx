@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { JAR_CAPACITY } from './stars.js'
 import PhysicsJar from './PhysicsJar.jsx'
+import { T } from './T.jsx'
 
 const FALL_SETTLE_MS = 1600
 const CELEBRATE_MS = 1600
@@ -60,13 +61,15 @@ export default function JarDropAnimation({ before, after, starsAdded }) {
   return (
     <div className="jar-drop">
       <PhysicsJar count={jarCount} size={170} shakeSignal={shakeSignal} />
-      {phase === 'celebrate' && <p className="jar-full-banner">🎉 Jar #{fullJarsNow} full!</p>}
+      {phase === 'celebrate' && (
+        <p className="jar-full-banner"><T k="jarFull" vars={{ number: fullJarsNow }} /></p>
+      )}
       <p className="jar-progress-label">
-        {progressLabel}/{JAR_CAPACITY} stars in this jar
+        <T k="starsInThisJar" vars={{ count: progressLabel, capacity: JAR_CAPACITY }} />
       </p>
       {phase === 'ready' && (
         <button className="preset-btn wide-btn collect-btn" onClick={handleCollect}>
-          ⭐ Add my {starsAdded} stars!
+          <T k="addMyStars" vars={{ count: starsAdded }} />
         </button>
       )}
     </div>

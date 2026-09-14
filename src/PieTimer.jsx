@@ -1,3 +1,5 @@
+import { tBoth } from './i18n.js'
+
 // A big, calm pie chart that visually drains as time passes.
 // No numbers, no seconds — just the shrinking colored wedge — unless
 // `overlayText` is set, which shows a time readout on top (used for the
@@ -23,7 +25,7 @@ export default function PieTimer({ fraction, color, trackColor, overlayText, siz
       height={size}
       viewBox={`0 0 ${size} ${size}`}
       role="img"
-      aria-label={overlayText ? `${overlayText} remaining` : 'Time remaining'}
+      aria-label={overlayText ? `${overlayText}` : tBoth('timeRemaining')}
     >
       <circle cx={cx} cy={cy} r={r} fill={trackColor} />
       {clamped > 0 && <path d={wedgePath} fill={color} />}

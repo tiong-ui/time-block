@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { JAR_CAPACITY, jarStats } from './stars.js'
 import PhysicsJar from './PhysicsJar.jsx'
+import { T } from './T.jsx'
 
 // Lets a kid check their progress: total stars ever earned, how many
 // jars they've filled, and how far along the current one is. Tapping
@@ -13,15 +14,15 @@ export default function StarJarScreen({ kid, onBack }) {
   return (
     <div className="screen">
       <div className="hero-icon" aria-hidden="true">{kid.avatar}</div>
-      <h1>{kid.name}'s Star Jar</h1>
+      <h1><T k="starJarTitle" vars={{ name: kid.name }} /></h1>
       <div className="jar-stats-row">
         <div className="jar-stat-tile">
           <span className="jar-stat-number">{totalStars}</span>
-          <span className="jar-stat-label">Total Stars</span>
+          <span className="jar-stat-label"><T k="totalStars" /></span>
         </div>
         <div className="jar-stat-tile">
           <span className="jar-stat-number">{fullJars}</span>
-          <span className="jar-stat-label">Full Jars</span>
+          <span className="jar-stat-label"><T k="fullJars" /></span>
         </div>
       </div>
       <PhysicsJar
@@ -31,11 +32,11 @@ export default function StarJarScreen({ kid, onBack }) {
         onShake={() => setShakeSignal(s => s + 1)}
       />
       <p className="jar-progress-label">
-        {currentJarStars}/{JAR_CAPACITY} stars in this jar
+        <T k="starsInThisJar" vars={{ count: currentJarStars, capacity: JAR_CAPACITY }} />
       </p>
-      <p className="peek-hint">👆 Tap the jar to shake it</p>
+      <p className="peek-hint"><T k="tapToShake" /></p>
       <button className="text-btn" onClick={onBack}>
-        Back
+        <T k="back" />
       </button>
     </div>
   )
