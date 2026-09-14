@@ -8,6 +8,13 @@ import './App.css'
 // App states: 'select' (choose a duration) -> 'running' (counting down,
 // possibly paused) -> 'done' (celebration screen)
 
+function formatTime(ms) {
+  const totalSeconds = Math.ceil(ms / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
 function loadStoredTheme() {
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY)
@@ -96,6 +103,7 @@ export default function App() {
       {phase === 'running' && (
         <RunningScreen
           fraction={fraction}
+          remainingMs={remainingMs}
           paused={paused}
           onTogglePause={togglePause}
           onStop={stopTimer}
@@ -150,16 +158,38 @@ function ThemePicker({ value, onChange }) {
   )
 }
 
-function RunningScreen({ fraction, paused, onTogglePause, onStop }) {
+function RunningScreen({ fraction, remainingMs, paused, onTogglePause, onStop }) {
+  const [peeking, setPeeking] = useState(false)
+
+  function startPeek(e) {
+    e.preventDefault()
+    setPeeking(true)
+  }
+
+  function endPeek() {
+    setPeeking(false)
+  }
+
   return (
     <div className="screen running-screen">
-      <PieTimer
-        fraction={fraction}
-        color={paused ? 'var(--accent-pale)' : 'var(--accent)'}
-        trackColor="var(--accent-soft)"
-        size={300}
-      />
+      <div
+        className="pie-touch-target"
+        onPointerDown={startPeek}
+        onPointerUp={endPeek}
+        onPointerLeave={endPeek}
+        onPointerCancel={endPeek}
+        onContextMenu={e => e.preventDefault()}
+      >
+        <PieTimer
+          fraction={fraction}
+          color={paused ? 'var(--accent-pale)' : 'var(--accent)'}
+          trackColor="var(--accent-soft)"
+          overlayText={peeking ? formatTime(remainingMs) : null}
+          size={300}
+        />
+      </div>
       <p className="running-hint">{paused ? 'Paused' : 'Stay focused!'}</p>
+      <p className="peek-hint">👆 Hold the circle to peek at the time</p>
       <div className="controls">
         <button className="icon-btn" onClick={onTogglePause} aria-label={paused ? 'Resume' : 'Pause'}>
           {paused ? '▶' : '⏸'}

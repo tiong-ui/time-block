@@ -1,6 +1,8 @@
 // A big, calm pie chart that visually drains as time passes.
-// No numbers, no seconds — just the shrinking colored wedge.
-export default function PieTimer({ fraction, color, trackColor, size = 280 }) {
+// No numbers, no seconds — just the shrinking colored wedge — unless
+// `overlayText` is set, which shows a time readout on top (used for the
+// press-and-hold "peek" gesture).
+export default function PieTimer({ fraction, color, trackColor, overlayText, size = 280 }) {
   const cx = size / 2;
   const cy = size / 2;
   const r = size / 2 - 6;
@@ -11,6 +13,9 @@ export default function PieTimer({ fraction, color, trackColor, size = 280 }) {
   // shrinking toward nothing as the fraction approaches 0.
   const wedgePath = describeWedge(cx, cy, r, clamped);
 
+  const chipWidth = size * 0.5;
+  const chipHeight = size * 0.22;
+
   return (
     <svg
       className="pie-timer"
@@ -18,11 +23,36 @@ export default function PieTimer({ fraction, color, trackColor, size = 280 }) {
       height={size}
       viewBox={`0 0 ${size} ${size}`}
       role="img"
-      aria-label="Time remaining"
+      aria-label={overlayText ? `${overlayText} remaining` : 'Time remaining'}
     >
       <circle cx={cx} cy={cy} r={r} fill={trackColor} />
       {clamped > 0 && <path d={wedgePath} fill={color} />}
       <circle cx={cx} cy={cy} r={r} fill="none" stroke={trackColor} strokeWidth="2" />
+      {overlayText && (
+        <g>
+          <rect
+            x={cx - chipWidth / 2}
+            y={cy - chipHeight / 2}
+            width={chipWidth}
+            height={chipHeight}
+            rx={chipHeight / 2}
+            fill="var(--card-bg)"
+            opacity="0.94"
+          />
+          <text
+            x={cx}
+            y={cy}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill="var(--text-primary)"
+            fontSize={size * 0.15}
+            fontWeight="800"
+            style={{ fontVariantNumeric: 'tabular-nums' }}
+          >
+            {overlayText}
+          </text>
+        </g>
+      )}
     </svg>
   );
 }
