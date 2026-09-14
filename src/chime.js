@@ -1,6 +1,6 @@
 // A short celebration melody played when the timer finishes.
 // Uses the Web Audio API directly so no sound files need to be shipped.
-// A handful of little tunes, one picked at random each time, so it
+// A handful of ~4-5 second tunes, one picked at random each time, so it
 // doesn't feel identical every session.
 let ctx = null
 
@@ -14,44 +14,97 @@ function getContext() {
 }
 
 // Note names -> frequencies (Hz), for readability below.
-const C5 = 523.25, D5 = 587.33, E5 = 659.25, FS5 = 739.99, G5 = 783.99, A5 = 880
-const C6 = 1046.5, E6 = 1318.51, G6 = 1567.98
+const C4 = 261.63
+const G4 = 392.0
+const C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 783.99, A5 = 880.0, B5 = 987.77
+const C6 = 1046.5, D6 = 1174.66, E6 = 1318.51, G6 = 1567.98
 
 // Each tune is a list of "chords": a set of frequencies played together,
 // starting at `time` seconds and ringing for `duration` seconds. A single
-// freq is just a one-note chord.
+// freq is just a one-note chord. The last chord of every tune sustains
+// with a bass pedal underneath for a fuller finish.
 const TUNES = [
-  // Classic ta-da
+  // Fanfare: rising call, echo, quick flourish, big finish
   [
-    { time: 0, duration: 0.35, freqs: [C5] },
-    { time: 0.18, duration: 0.9, freqs: [E5, G5] },
+    { time: 0.0, duration: 0.18, freqs: [C5] },
+    { time: 0.18, duration: 0.18, freqs: [E5] },
+    { time: 0.36, duration: 0.18, freqs: [G5] },
+    { time: 0.54, duration: 0.3, freqs: [C6] },
+    { time: 0.9, duration: 0.18, freqs: [G5] },
+    { time: 1.08, duration: 0.18, freqs: [E5] },
+    { time: 1.26, duration: 0.34, freqs: [C5] },
+    { time: 1.7, duration: 0.16, freqs: [E5] },
+    { time: 1.86, duration: 0.16, freqs: [G5] },
+    { time: 2.02, duration: 0.16, freqs: [C6] },
+    { time: 2.18, duration: 0.16, freqs: [E6] },
+    { time: 2.34, duration: 0.16, freqs: [G6] },
+    { time: 2.5, duration: 1.6, freqs: [C6, E6, G6] },
+    { time: 2.5, duration: 1.6, freqs: [C4] },
   ],
-  // Triumphant fanfare
+  // Bounce party: playful skips building to a shimmering finish
   [
-    { time: 0, duration: 0.15, freqs: [C5] },
-    { time: 0.15, duration: 0.15, freqs: [E5] },
-    { time: 0.3, duration: 0.15, freqs: [G5] },
-    { time: 0.45, duration: 0.7, freqs: [C6, E6, G6] },
+    { time: 0.0, duration: 0.14, freqs: [C5] },
+    { time: 0.16, duration: 0.14, freqs: [G4] },
+    { time: 0.32, duration: 0.14, freqs: [E5] },
+    { time: 0.48, duration: 0.14, freqs: [C5] },
+    { time: 0.64, duration: 0.14, freqs: [G5] },
+    { time: 0.8, duration: 0.14, freqs: [E5] },
+    { time: 0.96, duration: 0.2, freqs: [C6] },
+    { time: 1.2, duration: 0.14, freqs: [G5] },
+    { time: 1.36, duration: 0.14, freqs: [E5] },
+    { time: 1.52, duration: 0.14, freqs: [C6] },
+    { time: 1.68, duration: 0.14, freqs: [G5] },
+    { time: 1.84, duration: 0.28, freqs: [E6] },
+    { time: 2.16, duration: 0.14, freqs: [C6] },
+    { time: 2.32, duration: 0.14, freqs: [E6] },
+    { time: 2.48, duration: 0.14, freqs: [G6] },
+    { time: 2.64, duration: 1.6, freqs: [C6, E6, G6] },
+    { time: 2.64, duration: 1.6, freqs: [C4] },
   ],
-  // Playful bounce
+  // Sparkle run: a full scale run up and back, then a glittering finish
   [
-    { time: 0, duration: 0.12, freqs: [C5] },
-    { time: 0.12, duration: 0.12, freqs: [G5] },
+    { time: 0.0, duration: 0.12, freqs: [C5] },
+    { time: 0.12, duration: 0.12, freqs: [D5] },
     { time: 0.24, duration: 0.12, freqs: [E5] },
-    { time: 0.36, duration: 0.12, freqs: [C6] },
-    { time: 0.48, duration: 0.6, freqs: [G5, C6] },
+    { time: 0.36, duration: 0.12, freqs: [F5] },
+    { time: 0.48, duration: 0.12, freqs: [G5] },
+    { time: 0.6, duration: 0.12, freqs: [A5] },
+    { time: 0.72, duration: 0.12, freqs: [B5] },
+    { time: 0.84, duration: 0.2, freqs: [C6] },
+    { time: 1.1, duration: 0.12, freqs: [B5] },
+    { time: 1.22, duration: 0.12, freqs: [G5] },
+    { time: 1.34, duration: 0.12, freqs: [E5] },
+    { time: 1.46, duration: 0.3, freqs: [C5] },
+    { time: 1.85, duration: 0.12, freqs: [E5] },
+    { time: 1.97, duration: 0.12, freqs: [G5] },
+    { time: 2.09, duration: 0.12, freqs: [C6] },
+    { time: 2.21, duration: 0.12, freqs: [E6] },
+    { time: 2.33, duration: 0.12, freqs: [G6] },
+    { time: 2.45, duration: 1.7, freqs: [C6, E6, G6] },
+    { time: 2.45, duration: 1.7, freqs: [C4] },
   ],
-  // Sparkly run-up
+  // Gentle cheer: a slower, warmer build to the finish
   [
-    { time: 0, duration: 0.09, freqs: [C5] },
-    { time: 0.09, duration: 0.09, freqs: [D5] },
-    { time: 0.18, duration: 0.09, freqs: [E5] },
-    { time: 0.27, duration: 0.09, freqs: [FS5] },
-    { time: 0.36, duration: 0.09, freqs: [G5] },
-    { time: 0.45, duration: 0.09, freqs: [A5] },
-    { time: 0.54, duration: 0.7, freqs: [C6, E6] },
+    { time: 0.0, duration: 0.4, freqs: [E5] },
+    { time: 0.42, duration: 0.4, freqs: [G5] },
+    { time: 0.84, duration: 0.6, freqs: [C6] },
+    { time: 1.5, duration: 0.3, freqs: [G5] },
+    { time: 1.82, duration: 0.3, freqs: [A5] },
+    { time: 2.14, duration: 0.5, freqs: [C6] },
+    { time: 2.7, duration: 0.16, freqs: [D6] },
+    { time: 2.88, duration: 0.16, freqs: [E6] },
+    { time: 3.06, duration: 0.16, freqs: [G6] },
+    { time: 3.24, duration: 1.8, freqs: [C6, E6, G6] },
+    { time: 3.24, duration: 1.8, freqs: [C4] },
   ],
 ]
+
+// Warm sine for the bass pedal and the delicate top shimmer, brighter
+// triangle for the main melodic register in between.
+function waveTypeFor(freq) {
+  if (freq < 300 || freq > 1100) return 'sine'
+  return 'triangle'
+}
 
 export const TUNE_COUNT = TUNES.length
 
@@ -68,15 +121,17 @@ export function playChime(tuneIndex) {
 
   tune.forEach(({ time, duration, freqs }) => {
     const start = now + time
+    const peakGain = freqs.length > 1 ? 0.15 : 0.22
+
     freqs.forEach(freq => {
       const osc = audioCtx.createOscillator()
       const gain = audioCtx.createGain()
 
-      osc.type = 'sine'
+      osc.type = waveTypeFor(freq)
       osc.frequency.value = freq
 
       gain.gain.setValueAtTime(0, start)
-      gain.gain.linearRampToValueAtTime(0.22, start + 0.03)
+      gain.gain.linearRampToValueAtTime(peakGain, start + 0.03)
       gain.gain.exponentialRampToValueAtTime(0.001, start + duration)
 
       osc.connect(gain)
