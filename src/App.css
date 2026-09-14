@@ -352,6 +352,195 @@ h1 {
   }
 }
 
+/* ── Kid bar (on the select screen) ── */
+.kid-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.kid-bar-name {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.kid-bar-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.text-btn {
+  border: none;
+  background: none;
+  color: var(--accent-soft-ink);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.text-btn:hover {
+  text-decoration: underline;
+}
+
+/* ── Family setup / join form ── */
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.join-input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 2px solid var(--accent-soft);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.join-input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-error {
+  color: #e05555;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.family-code-display {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+}
+
+/* ── Kid picker ── */
+.kid-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.kid-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 8px;
+  border: none;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: var(--accent-soft-ink);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.kid-card:hover {
+  transform: scale(1.04);
+  background: var(--accent);
+  color: #fff;
+}
+
+.kid-avatar {
+  font-size: 2rem;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.avatar-btn {
+  font-size: 1.4rem;
+  padding: 8px 0;
+  border: none;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.avatar-btn:hover {
+  transform: scale(1.1);
+}
+
+.avatar-btn.active {
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* ── Stickers ── */
+.sticker-award {
+  color: var(--accent-soft-ink);
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.sticker-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 4px;
+  border-radius: 16px;
+  background: var(--bg-top);
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.sticker-tile.earned {
+  background: var(--accent-soft);
+  opacity: 1;
+  filter: none;
+}
+
+.sticker-emoji {
+  font-size: 1.6rem;
+}
+
+.sticker-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.sticker-count {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
 /* ── Responsive ── */
 @media (max-width: 480px) {
   .screen {
