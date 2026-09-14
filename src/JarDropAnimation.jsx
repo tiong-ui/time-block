@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import { JAR_CAPACITY } from './stars.js'
-import JarVisual from './JarVisual.jsx'
+import PhysicsJar from './PhysicsJar.jsx'
 
-const FALL_DURATION_MS = 900
-const STAGGER_MS = 150
-const CELEBRATE_MS = 1400
+const DROP_DELAY_MS = 400
+const FALL_SETTLE_MS = 1600
+const CELEBRATE_MS = 1600
 
-// Plays on the completion screen: the newly-earned stars fall into the
-// jar one by one, and if that fills it, a little celebration plays
-// before settling into the next (now-emptier) jar.
+// Plays on the completion screen: the newly-earned stars drop into the
+// jar under gravity and pile up. If that fills the jar, it gets a
+// celebratory shake before a fresh jar catches the overflow.
 export default function JarDropAnimation({ before, after, starsAdded }) {
   const beforeInJar = before % JAR_CAPACITY
   const afterInJar = after % JAR_CAPACITY
@@ -16,56 +16,50 @@ export default function JarDropAnimation({ before, after, starsAdded }) {
   const fullJarsNow = Math.floor(after / JAR_CAPACITY)
 
   const [phase, setPhase] = useState('falling') // 'falling' -> 'celebrate'? -> 'settled'
-  const [displayCount, setDisplayCount] = useState(beforeInJar)
+  const [jarCount, setJarCount] = useState(beforeInJar)
+  const [shakeSignal, setShakeSignal] = useState(0)
 
+  // A beat to take in the jar as it stands, then the new stars drop in.
   useEffect(() => {
-    const fallTotalMs = FALL_DURATION_MS + (starsAdded - 1) * STAGGER_MS
+    const dropTimer = setTimeout(() => {
+      setJarCount(Math.min(beforeInJar + starsAdded, JAR_CAPACITY))
+    }, DROP_DELAY_MS)
 
     const landTimer = setTimeout(() => {
       if (jarCompleted) {
-        setDisplayCount(JAR_CAPACITY)
         setPhase('celebrate')
+        setShakeSignal(s => s + 1)
       } else {
-        setDisplayCount(afterInJar)
         setPhase('settled')
       }
-    }, fallTotalMs)
+    }, DROP_DELAY_MS + FALL_SETTLE_MS)
 
-    return () => clearTimeout(landTimer)
-    // Only the initial mount should schedule this — before/after/starsAdded
-    // describe one single completion event and won't change mid-animation.
+    return () => {
+      clearTimeout(dropTimer)
+      clearTimeout(landTimer)
+    }
+    // One completion event, one drop — nothing here changes mid-animation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     if (phase !== 'celebrate') return undefined
     const resetTimer = setTimeout(() => {
-      setDisplayCount(afterInJar)
+      setJarCount(afterInJar)
       setPhase('settled')
     }, CELEBRATE_MS)
     return () => clearTimeout(resetTimer)
   }, [phase, afterInJar])
 
-  const progressLabel = phase === 'falling' ? beforeInJar : afterInJar
+  // While the full jar is on screen being celebrated, the label should
+  // match what's visibly in it rather than jumping ahead to the next jar.
+  let progressLabel = afterInJar
+  if (phase === 'falling') progressLabel = beforeInJar
+  else if (phase === 'celebrate') progressLabel = JAR_CAPACITY
 
   return (
     <div className="jar-drop">
-      <div className="jar-anim-wrapper">
-        <JarVisual key={phase} count={displayCount} size={170} />
-        {phase === 'falling' && (
-          <div className="falling-stars-layer" aria-hidden="true">
-            {Array.from({ length: starsAdded }).map((_, i) => (
-              <span
-                key={i}
-                className="falling-star"
-                style={{ animationDelay: `${i * STAGGER_MS}ms` }}
-              >
-                ⭐
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+      <PhysicsJar count={jarCount} size={170} shakeSignal={shakeSignal} />
       {phase === 'celebrate' && <p className="jar-full-banner">🎉 Jar #{fullJarsNow} full!</p>}
       <p className="jar-progress-label">
         {progressLabel}/{JAR_CAPACITY} stars in this jar
