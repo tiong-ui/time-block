@@ -10,7 +10,7 @@ import { tBoth } from './i18n.js'
 // The whole jar (glass + stars) is drawn on a canvas so the physics
 // coordinates and the artwork share one space.
 
-const STAR_RADIUS = 7
+const STAR_RADIUS = 8.5
 const SPAWN_INTERVAL_MS = 110
 const SHAKE_PULSE_MS = 70
 
