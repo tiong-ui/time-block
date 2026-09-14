@@ -238,6 +238,15 @@ h1 {
 }
 
 /* ── Running screen ── */
+.pie-touch-target {
+  display: inline-block;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .pie-timer {
   display: block;
   margin: 8px auto 20px;
@@ -249,7 +258,14 @@ h1 {
   color: var(--text-muted);
   font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 4px;
+}
+
+.peek-hint {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-bottom: 16px;
 }
 
 .controls {
