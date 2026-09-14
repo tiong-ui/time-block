@@ -108,19 +108,26 @@ function waveTypeFor(freq) {
 
 export const TUNE_COUNT = TUNES.length
 
-// `tuneIndex` picks a specific tune (0..TUNE_COUNT-1) instead of a random
-// one — handy for previewing each melody from the console, e.g.
-// `window.playChime(0)`. Omit it for the normal random behavior.
-export function playChime(tuneIndex) {
-  const audioCtx = getContext()
-  if (!audioCtx) return
-  if (audioCtx.state === 'suspended') audioCtx.resume()
+// Anything scheduled ahead of time hands back a canceller, so a pause
+// or an early stop can silence what hasn't sounded yet.
+function cancelHandle(nodes) {
+  return () => {
+    for (const { osc, gain } of nodes) {
+      try {
+        osc.stop()
+        osc.disconnect()
+        gain.disconnect()
+      } catch {
+        // Already finished — nothing to silence.
+      }
+    }
+  }
+}
 
-  const tune = TUNES[Number.isInteger(tuneIndex) ? tuneIndex : Math.floor(Math.random() * TUNES.length)]
-  const now = audioCtx.currentTime
-
+function scheduleTune(audioCtx, tune, startAt) {
+  const nodes = []
   tune.forEach(({ time, duration, freqs }) => {
-    const start = now + time
+    const start = startAt + time
     const peakGain = freqs.length > 1 ? 0.15 : 0.22
 
     freqs.forEach(freq => {
@@ -139,26 +146,48 @@ export function playChime(tuneIndex) {
 
       osc.start(start)
       osc.stop(start + duration)
+      nodes.push({ osc, gain })
     })
   })
+  return nodes
 }
 
-// Interval cues for HIIT: a rising double beep to start working, a
-// softer falling note to drop into rest. Kept short and distinct —
-// they fire mid-workout, when nobody is looking at the screen.
-export function playIntervalCue(kind) {
+function pickTune(tuneIndex) {
+  return TUNES[Number.isInteger(tuneIndex) ? tuneIndex : Math.floor(Math.random() * TUNES.length)]
+}
+
+// `tuneIndex` picks a specific tune (0..TUNE_COUNT-1) instead of a random
+// one — handy for previewing each melody from the console, e.g.
+// `window.playChime(0)`. Omit it for the normal random behavior.
+export function playChime(tuneIndex) {
   const audioCtx = getContext()
   if (!audioCtx) return
   if (audioCtx.state === 'suspended') audioCtx.resume()
+  scheduleTune(audioCtx, pickTune(tuneIndex), audioCtx.currentTime)
+}
 
-  const now = audioCtx.currentTime
+// Schedules the finishing melody `delayMs` from now on the Web Audio
+// clock, which keeps running while the tab is hidden — so the timer is
+// still heard when the phone is face-down or in a pocket.
+export function scheduleChime(delayMs) {
+  const audioCtx = getContext()
+  if (!audioCtx) return () => {}
+  if (audioCtx.state === 'suspended') audioCtx.resume()
+  const nodes = scheduleTune(audioCtx, pickTune(), audioCtx.currentTime + Math.max(0, delayMs) / 1000)
+  return cancelHandle(nodes)
+}
+
+// Interval cues for HIIT: a rising double beep to start working, a
+// softer note to drop into rest. Short and distinct — they fire
+// mid-workout, when nobody is looking at the screen.
+function scheduleCue(audioCtx, kind, startAt) {
   const notes =
     kind === 'work'
       ? [{ freq: G5, time: 0, duration: 0.12 }, { freq: C6, time: 0.13, duration: 0.22 }]
       : [{ freq: E5, time: 0, duration: 0.3 }]
 
-  notes.forEach(({ freq, time, duration }) => {
-    const start = now + time
+  return notes.map(({ freq, time, duration }) => {
+    const start = startAt + time
     const osc = audioCtx.createOscillator()
     const gain = audioCtx.createGain()
     osc.type = kind === 'work' ? 'triangle' : 'sine'
@@ -170,5 +199,25 @@ export function playIntervalCue(kind) {
     gain.connect(audioCtx.destination)
     osc.start(start)
     osc.stop(start + duration)
+    return { osc, gain }
   })
+}
+
+export function playIntervalCue(kind) {
+  const audioCtx = getContext()
+  if (!audioCtx) return
+  if (audioCtx.state === 'suspended') audioCtx.resume()
+  scheduleCue(audioCtx, kind, audioCtx.currentTime)
+}
+
+// Books every upcoming work/rest switch on the audio clock in one go,
+// so the cues keep coming with the screen off. `cues` is a list of
+// { atMs, kind } offsets from now.
+export function scheduleIntervalCues(cues) {
+  const audioCtx = getContext()
+  if (!audioCtx) return () => {}
+  if (audioCtx.state === 'suspended') audioCtx.resume()
+  const now = audioCtx.currentTime
+  const nodes = cues.flatMap(({ atMs, kind }) => scheduleCue(audioCtx, kind, now + Math.max(0, atMs) / 1000))
+  return cancelHandle(nodes)
 }

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node test/hiit.test.mjs && node test/session.test.mjs"
   },
   "dependencies": {
     "firebase": "^12.19.0",
