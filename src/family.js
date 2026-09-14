@@ -1,8 +1,8 @@
 // A "family code" links every device that knows it to the same set of
-// kid profiles and sticker collections in Firestore. It's not real
-// security — anyone with the code could join — but stickers aren't
-// sensitive data, and this avoids building real accounts/passwords for
-// a kids' app.
+// kid profiles and Star Jars in Firestore. It's not real security —
+// anyone with the code could join — but a star count isn't sensitive
+// data, and this avoids building real accounts/passwords for a kids'
+// app.
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db, authReady } from './firebase.js'
 

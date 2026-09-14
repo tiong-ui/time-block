@@ -1,4 +1,4 @@
-// Firebase setup for the family-code sticker sync. This config is meant
+// Firebase setup for the family-code Star Jar sync. This config is meant
 // to be public — it identifies the project, it isn't a secret — access
 // is controlled by Firestore security rules instead. Analytics is
 // intentionally not used: this is a kids' app, no reason to track usage.

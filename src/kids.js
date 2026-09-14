@@ -1,4 +1,4 @@
-// Kid profiles and their sticker collections, stored under
+// Kid profiles and their Star Jar totals, stored under
 // families/{familyCode}/kids/{kidId} in Firestore.
 import {
   collection,
@@ -6,7 +6,7 @@ import {
   addDoc,
   onSnapshot,
   updateDoc,
-  arrayUnion,
+  increment,
   serverTimestamp,
 } from 'firebase/firestore'
 import { db, authReady } from './firebase.js'
@@ -16,8 +16,8 @@ function kidsCollection(familyCode) {
 }
 
 // Live-subscribes to the kid list for a family. Calls `onChange` with
-// an array of { id, name, avatar, stickers } each time it updates, and
-// returns an unsubscribe function.
+// an array of { id, name, avatar, totalStars } each time it updates,
+// and returns an unsubscribe function.
 export function watchKids(familyCode, onChange, onError) {
   let unsubscribe = () => {}
   authReady
@@ -25,7 +25,7 @@ export function watchKids(familyCode, onChange, onError) {
       unsubscribe = onSnapshot(
         kidsCollection(familyCode),
         snap => {
-          const kids = snap.docs.map(d => ({ id: d.id, stickers: [], ...d.data() }))
+          const kids = snap.docs.map(d => ({ id: d.id, totalStars: 0, ...d.data() }))
           onChange(kids)
         },
         onError,
@@ -40,16 +40,14 @@ export async function addKid(familyCode, { name, avatar }) {
   const ref = await addDoc(kidsCollection(familyCode), {
     name,
     avatar,
-    stickers: [],
+    totalStars: 0,
     createdAt: serverTimestamp(),
   })
   return ref.id
 }
 
-export async function awardSticker(familyCode, kidId, sticker) {
+export async function addStars(familyCode, kidId, amount) {
   await authReady
   const ref = doc(db, 'families', familyCode, 'kids', kidId)
-  await updateDoc(ref, {
-    stickers: arrayUnion({ id: sticker.id, earnedAt: Date.now() }),
-  })
+  await updateDoc(ref, { totalStars: increment(amount) })
 }
