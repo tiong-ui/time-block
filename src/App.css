@@ -103,6 +103,13 @@
   }
 }
 
+/* Bumps every rem-based size at once — this is a kids' app, so the
+   type wants to be comfortably large, and the bilingual labels give
+   the English half room to stay readable rather than shrinking away. */
+html {
+  font-size: 118.75%;
+}
+
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 60%);
@@ -311,7 +318,7 @@ h1 {
 
 .peek-hint {
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   opacity: 0.7;
   margin-bottom: 16px;
 }
@@ -367,9 +374,9 @@ h1 {
 }
 
 .t-en {
-  font-size: 0.72em;
+  font-size: 0.78em;
   font-weight: 600;
-  opacity: 0.66;
+  opacity: 0.7;
   line-height: 1.25;
   letter-spacing: 0.01em;
 }
@@ -583,7 +590,7 @@ h1 .t-en {
 }
 
 .jar-stat-label {
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
