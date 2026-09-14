@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AVATARS } from './avatars.js'
+import AvatarGrid from './AvatarGrid.jsx'
 import { errorDetail } from './errorMessage.js'
 
 // Lets whoever's using the device pick their profile, or add a new one.
@@ -57,20 +58,7 @@ export default function KidPickerScreen({ kids, kidsLoaded, loadError, onSelectK
             autoComplete="off"
             maxLength={20}
           />
-          <div className="avatar-grid">
-            {AVATARS.map(a => (
-              <button
-                key={a}
-                type="button"
-                className={`avatar-btn${avatar === a ? ' active' : ''}`}
-                onClick={() => setAvatar(a)}
-                aria-pressed={avatar === a}
-                aria-label={`Avatar ${a}`}
-              >
-                {a}
-              </button>
-            ))}
-          </div>
+          <AvatarGrid value={avatar} onChange={setAvatar} />
           {error && <p className="form-error">{error}</p>}
           <button className="preset-btn wide-btn" type="submit" disabled={busy || !name.trim()}>
             {busy ? 'Adding…' : 'Add'}

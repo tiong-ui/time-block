@@ -5,10 +5,11 @@ import { ACTIVITIES, ACTIVITY_STORAGE_KEY } from './activities'
 import { STARS_PER_SESSION } from './stars.js'
 import { errorDetail } from './errorMessage.js'
 import { loadStoredFamilyCode, storeFamilyCode } from './family.js'
-import { watchKids, addKid, addStars } from './kids.js'
+import { watchKids, addKid, addStars, updateKidAvatar } from './kids.js'
 import FamilySetupScreen from './FamilySetupScreen.jsx'
 import KidPickerScreen from './KidPickerScreen.jsx'
 import StarJarScreen from './StarJarScreen.jsx'
+import EditAvatarScreen from './EditAvatarScreen.jsx'
 import JarDropAnimation from './JarDropAnimation.jsx'
 import PieTimer from './PieTimer'
 import { playChime } from './chime'
@@ -16,8 +17,9 @@ import './App.css'
 
 // Outer stages: 'family-setup' (no family code yet) -> 'kid-picker'
 // (choose/add who's using the device) -> 'timer' (the focus timer
-// itself) -> 'starjar' (view a kid's Star Jar), switchable back to
-// 'kid-picker' at any time from the timer's select screen.
+// itself) -> 'starjar' (view a kid's Star Jar) / 'edit-avatar' (change
+// the current kid's avatar), switchable back to 'kid-picker' at any
+// time from the timer's select screen.
 //
 // Within 'timer', a separate state machine runs: 'select' (choose a
 // duration) -> 'running' (counting down, possibly paused) -> 'done'
@@ -132,6 +134,10 @@ export default function App() {
   async function handleAddKid({ name, avatar }) {
     const kidId = await addKid(familyCode, { name, avatar })
     handleSelectKid(kidId)
+  }
+
+  async function handleUpdateAvatar(avatar) {
+    await updateKidAvatar(familyCode, activeKidId, avatar)
   }
 
   const activeKid = kids.find(k => k.id === activeKidId) ?? null
@@ -256,6 +262,14 @@ export default function App() {
     )
   }
 
+  if (stage === 'edit-avatar') {
+    return (
+      <div className="app">
+        <EditAvatarScreen kid={activeKid} onSave={handleUpdateAvatar} onBack={() => setStage('timer')} />
+      </div>
+    )
+  }
+
   return (
     <div className="app">
       {phase === 'select' && (
@@ -268,6 +282,7 @@ export default function App() {
           kid={activeKid}
           onSwitchKid={() => setStage('kid-picker')}
           onViewStarJar={() => setStage('starjar')}
+          onEditAvatar={() => setStage('edit-avatar')}
         />
       )}
 
@@ -298,13 +313,22 @@ function SelectScreen({
   kid,
   onSwitchKid,
   onViewStarJar,
+  onEditAvatar,
 }) {
   return (
     <div className="screen select-screen">
       {kid && (
         <div className="kid-bar">
           <span className="kid-bar-name">
-            <span aria-hidden="true">{kid.avatar}</span> {kid.name}
+            <button
+              className="kid-bar-avatar"
+              onClick={onEditAvatar}
+              aria-label={`Change ${kid.name}'s avatar`}
+              title="Change avatar"
+            >
+              {kid.avatar}
+            </button>
+            {kid.name}
           </span>
           <div className="kid-bar-actions">
             <button className="text-btn" onClick={onViewStarJar}>

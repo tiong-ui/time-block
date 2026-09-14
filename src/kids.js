@@ -51,3 +51,9 @@ export async function addStars(familyCode, kidId, amount) {
   const ref = doc(db, 'families', familyCode, 'kids', kidId)
   await updateDoc(ref, { totalStars: increment(amount) })
 }
+
+export async function updateKidAvatar(familyCode, kidId, avatar) {
+  await authReady
+  const ref = doc(db, 'families', familyCode, 'kids', kidId)
+  await updateDoc(ref, { avatar })
+}
