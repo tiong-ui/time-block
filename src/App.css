@@ -596,6 +596,32 @@ h1 {
   flex-direction: column;
   align-items: center;
   margin-bottom: 8px;
+  width: 100%;
+}
+
+/* The star payoff is the kid's to trigger, so it leads the screen. The
+   pulse is a glow rather than a scale, so the tap target never moves
+   under small fingers. */
+@keyframes collectPulse {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 18px 2px var(--accent); }
+}
+
+.collect-btn {
+  background: var(--accent);
+  color: #fff;
+  animation: collectPulse 1.6s ease-in-out infinite;
+}
+
+.collect-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collect-btn {
+    animation: none;
+  }
 }
 
 @keyframes jarGlow {
