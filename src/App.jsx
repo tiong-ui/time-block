@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { PRESETS } from './presets'
+import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY } from './themes'
 import PieTimer from './PieTimer'
 import { playChime } from './chime'
 import './App.css'
@@ -7,11 +8,31 @@ import './App.css'
 // App states: 'select' (choose a duration) -> 'running' (counting down,
 // possibly paused) -> 'done' (celebration screen)
 
+function loadStoredTheme() {
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY)
+    return THEMES.some(t => t.id === stored) ? stored : DEFAULT_THEME
+  } catch {
+    return DEFAULT_THEME
+  }
+}
+
 export default function App() {
   const [phase, setPhase] = useState('select')
   const [totalMs, setTotalMs] = useState(0)
   const [remainingMs, setRemainingMs] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [colorTheme, setColorTheme] = useState(loadStoredTheme)
+
+  // Apply the chosen color theme to the whole page and remember it.
+  useEffect(() => {
+    document.documentElement.dataset.colorTheme = colorTheme
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, colorTheme)
+    } catch {
+      // Storage can be unavailable (private browsing); theme just won't persist.
+    }
+  }, [colorTheme])
 
   // Wall-clock bookkeeping so the countdown stays accurate even if the
   // tab is backgrounded and rAF/timers get throttled.
@@ -69,7 +90,7 @@ export default function App() {
   return (
     <div className="app">
       {phase === 'select' && (
-        <SelectScreen onSelect={startTimer} />
+        <SelectScreen onSelect={startTimer} colorTheme={colorTheme} onColorThemeChange={setColorTheme} />
       )}
 
       {phase === 'running' && (
@@ -88,7 +109,7 @@ export default function App() {
   )
 }
 
-function SelectScreen({ onSelect }) {
+function SelectScreen({ onSelect, colorTheme, onColorThemeChange }) {
   return (
     <div className="screen select-screen">
       <div className="hero-icon" aria-hidden="true">🎯</div>
@@ -106,6 +127,25 @@ function SelectScreen({ onSelect }) {
           </button>
         ))}
       </div>
+      <ThemePicker value={colorTheme} onChange={onColorThemeChange} />
+    </div>
+  )
+}
+
+function ThemePicker({ value, onChange }) {
+  return (
+    <div className="theme-picker" role="radiogroup" aria-label="Color theme">
+      {THEMES.map(theme => (
+        <button
+          key={theme.id}
+          className={`theme-swatch${value === theme.id ? ' active' : ''}`}
+          style={{ '--swatch-color': theme.swatch }}
+          role="radio"
+          aria-checked={value === theme.id}
+          aria-label={theme.name}
+          onClick={() => onChange(theme.id)}
+        />
+      ))}
     </div>
   )
 }
@@ -115,8 +155,8 @@ function RunningScreen({ fraction, paused, onTogglePause, onStop }) {
     <div className="screen running-screen">
       <PieTimer
         fraction={fraction}
-        color={paused ? '#B9C0FF' : '#7C83FD'}
-        trackColor="#EDEFFF"
+        color={paused ? 'var(--accent-pale)' : 'var(--accent)'}
+        trackColor="var(--accent-soft)"
         size={300}
       />
       <p className="running-hint">{paused ? 'Paused' : 'Stay focused!'}</p>

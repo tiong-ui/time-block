@@ -10,8 +10,6 @@
   --card-bg: #ffffff;
   --text-primary: #2c2c40;
   --text-muted: #7a7d94;
-  --accent: #7C83FD;
-  --accent-soft: #EDEFFF;
   --shadow: rgba(60, 60, 110, 0.12);
 }
 
@@ -22,9 +20,86 @@
     --card-bg: #23233a;
     --text-primary: #f2f2f8;
     --text-muted: #9a9cb8;
-    --accent: #8f95ff;
-    --accent-soft: #32324f;
     --shadow: rgba(0, 0, 0, 0.35);
+  }
+}
+
+/* ── Color themes ──
+   Each theme sets --accent (buttons, active wedge), --accent-soft
+   (button/track background), --accent-soft-ink (text on that background)
+   and --accent-pale (paused wedge). Neutrals above stay the same across
+   every theme; only the accent hue changes. */
+:root,
+[data-color-theme='indigo'] {
+  --accent: #7c83fd;
+  --accent-soft: #edefff;
+  --accent-soft-ink: #5d63e0;
+  --accent-pale: #b9c0ff;
+}
+
+[data-color-theme='ocean'] {
+  --accent: #22b8c8;
+  --accent-soft: #e1f7f9;
+  --accent-soft-ink: #167c88;
+  --accent-pale: #8fe0e8;
+}
+
+[data-color-theme='berry'] {
+  --accent: #e0559f;
+  --accent-soft: #fdeaf3;
+  --accent-soft-ink: #a83875;
+  --accent-pale: #f0a8cb;
+}
+
+[data-color-theme='forest'] {
+  --accent: #3fae68;
+  --accent-soft: #e7f7ec;
+  --accent-soft-ink: #237a45;
+  --accent-pale: #9bdcb2;
+}
+
+[data-color-theme='sunset'] {
+  --accent: #ff8a3d;
+  --accent-soft: #fff0e2;
+  --accent-soft-ink: #c96018;
+  --accent-pale: #ffc79a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root,
+  [data-color-theme='indigo'] {
+    --accent: #9096ff;
+    --accent-soft: #32324f;
+    --accent-soft-ink: #c3c6ff;
+    --accent-pale: #6b71cf;
+  }
+
+  [data-color-theme='ocean'] {
+    --accent: #4dd0de;
+    --accent-soft: #163a3d;
+    --accent-soft-ink: #9be9f0;
+    --accent-pale: #2f8b96;
+  }
+
+  [data-color-theme='berry'] {
+    --accent: #ff8fc4;
+    --accent-soft: #3a1f30;
+    --accent-soft-ink: #ffb8dd;
+    --accent-pale: #b2588c;
+  }
+
+  [data-color-theme='forest'] {
+    --accent: #5fd68a;
+    --accent-soft: #1c3324;
+    --accent-soft-ink: #a7f0c1;
+    --accent-pale: #3f9163;
+  }
+
+  [data-color-theme='sunset'] {
+    --accent: #ffab6b;
+    --accent-soft: #402615;
+    --accent-soft-ink: #ffcda0;
+    --accent-pale: #cc7d3f;
   }
 }
 
@@ -96,7 +171,7 @@ h1 {
   border: none;
   border-radius: 20px;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-soft-ink);
   cursor: pointer;
   transition: transform 0.12s ease, background 0.12s ease;
 }
@@ -135,6 +210,33 @@ h1 {
   font-weight: 700;
 }
 
+/* ── Theme picker ── */
+.theme-picker {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.theme-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: var(--swatch-color);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.06);
+  transition: transform 0.12s ease;
+}
+
+.theme-swatch:hover {
+  transform: scale(1.12);
+}
+
+.theme-swatch.active {
+  box-shadow: 0 0 0 3px var(--card-bg), 0 0 0 5px var(--swatch-color);
+}
+
 /* ── Running screen ── */
 .pie-timer {
   display: block;
@@ -161,7 +263,7 @@ h1 {
   border-radius: 50%;
   border: none;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-soft-ink);
   font-size: 1.4rem;
   cursor: pointer;
   display: flex;
