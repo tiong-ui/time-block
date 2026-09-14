@@ -53,12 +53,17 @@ const TUNES = [
   ],
 ]
 
-export function playChime() {
+export const TUNE_COUNT = TUNES.length
+
+// `tuneIndex` picks a specific tune (0..TUNE_COUNT-1) instead of a random
+// one — handy for previewing each melody from the console, e.g.
+// `window.playChime(0)`. Omit it for the normal random behavior.
+export function playChime(tuneIndex) {
   const audioCtx = getContext()
   if (!audioCtx) return
   if (audioCtx.state === 'suspended') audioCtx.resume()
 
-  const tune = TUNES[Math.floor(Math.random() * TUNES.length)]
+  const tune = TUNES[Number.isInteger(tuneIndex) ? tuneIndex : Math.floor(Math.random() * TUNES.length)]
   const now = audioCtx.currentTime
 
   tune.forEach(({ time, duration, freqs }) => {
