@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { AVATARS } from './stickers.js'
+import { errorDetail } from './errorMessage.js'
 
 // Lets whoever's using the device pick their profile, or add a new one.
 // Shown on first use of a family, whenever kids switch, or when a
 // stored profile no longer exists.
-export default function KidPickerScreen({ kids, kidsLoaded, onSelectKid, onAddKid }) {
+export default function KidPickerScreen({ kids, kidsLoaded, loadError, onSelectKid, onAddKid }) {
   const [adding, setAdding] = useState(kidsLoaded && kids.length === 0)
   const [name, setName] = useState('')
   const [avatar, setAvatar] = useState(AVATARS[0])
@@ -19,10 +20,24 @@ export default function KidPickerScreen({ kids, kidsLoaded, onSelectKid, onAddKi
     setError('')
     try {
       await onAddKid({ name: trimmed, avatar })
-    } catch {
-      setError("Couldn't add that right now. Check your connection and try again.")
+    } catch (err) {
+      console.error('Failed to add kid:', err)
+      setError(`Couldn't add that right now.${errorDetail(err)} Check your connection and try again.`)
       setBusy(false)
     }
+  }
+
+  if (loadError && kids.length === 0) {
+    return (
+      <div className="screen">
+        <div className="hero-icon" aria-hidden="true">😕</div>
+        <h1>Couldn't connect</h1>
+        <p className="form-error">{loadError}</p>
+        <button className="preset-btn wide-btn" onClick={() => window.location.reload()}>
+          Retry
+        </button>
+      </div>
+    )
   }
 
   if (adding || (kidsLoaded && kids.length === 0)) {

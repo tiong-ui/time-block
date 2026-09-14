@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createFamily, familyExists, normalizeCode } from './family.js'
+import { errorDetail } from './errorMessage.js'
 
 // First-run screen: create a new family (generates a code) or join an
 // existing one (type a code from another device). The code is what
@@ -18,8 +19,9 @@ export default function FamilySetupScreen({ onFamilyReady }) {
       const code = await createFamily()
       setNewCode(code)
       setMode('created')
-    } catch {
-      setError("Couldn't create a family right now. Check your connection and try again.")
+    } catch (err) {
+      console.error('Failed to create family:', err)
+      setError(`Couldn't create a family right now.${errorDetail(err)} Check your connection and try again.`)
     } finally {
       setBusy(false)
     }
@@ -38,8 +40,9 @@ export default function FamilySetupScreen({ onFamilyReady }) {
       } else {
         setError("We couldn't find that code. Double-check it and try again.")
       }
-    } catch {
-      setError("Couldn't check that code right now. Check your connection and try again.")
+    } catch (err) {
+      console.error('Failed to check family code:', err)
+      setError(`Couldn't check that code right now.${errorDetail(err)} Check your connection and try again.`)
     } finally {
       setBusy(false)
     }
