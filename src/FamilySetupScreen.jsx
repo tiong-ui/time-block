@@ -4,7 +4,7 @@ import { errorDetail } from './errorMessage.js'
 
 // First-run screen: create a new family (generates a code) or join an
 // existing one (type a code from another device). The code is what
-// links devices to the same kid profiles and sticker collections.
+// links devices to the same kid profiles and Star Jars.
 export default function FamilySetupScreen({ onFamilyReady }) {
   const [mode, setMode] = useState('choose') // 'choose' | 'join' | 'created'
   const [joinInput, setJoinInput] = useState('')
@@ -95,7 +95,7 @@ export default function FamilySetupScreen({ onFamilyReady }) {
     <div className="screen">
       <div className="hero-icon" aria-hidden="true">🎯</div>
       <h1>Focus Time</h1>
-      <p className="subtitle">Set up sticker collections your kids can earn as they focus.</p>
+      <p className="subtitle">Set up a Star Jar your kids can fill as they focus.</p>
       {error && <p className="form-error">{error}</p>}
       <button className="preset-btn wide-btn" onClick={handleCreate} disabled={busy}>
         {busy ? 'Creating…' : '✨ Create a new family'}

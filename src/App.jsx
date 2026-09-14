@@ -2,25 +2,26 @@ import { useEffect, useRef, useState } from 'react'
 import { PRESETS } from './presets'
 import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY } from './themes'
 import { ACTIVITIES, ACTIVITY_STORAGE_KEY } from './activities'
-import { randomSticker } from './stickers.js'
+import { STARS_PER_SESSION } from './stars.js'
 import { errorDetail } from './errorMessage.js'
 import { loadStoredFamilyCode, storeFamilyCode } from './family.js'
-import { watchKids, addKid, awardSticker } from './kids.js'
+import { watchKids, addKid, addStars } from './kids.js'
 import FamilySetupScreen from './FamilySetupScreen.jsx'
 import KidPickerScreen from './KidPickerScreen.jsx'
-import StickersScreen from './StickersScreen.jsx'
+import StarJarScreen from './StarJarScreen.jsx'
+import JarDropAnimation from './JarDropAnimation.jsx'
 import PieTimer from './PieTimer'
 import { playChime } from './chime'
 import './App.css'
 
 // Outer stages: 'family-setup' (no family code yet) -> 'kid-picker'
 // (choose/add who's using the device) -> 'timer' (the focus timer
-// itself) -> 'stickers' (view a kid's collection), switchable back to
+// itself) -> 'starjar' (view a kid's Star Jar), switchable back to
 // 'kid-picker' at any time from the timer's select screen.
 //
 // Within 'timer', a separate state machine runs: 'select' (choose a
 // duration) -> 'running' (counting down, possibly paused) -> 'done'
-// (celebration screen, sticker awarded).
+// (celebration screen, stars dropped into the jar).
 
 const ACTIVE_KID_STORAGE_KEY = 'focus-timer-active-kid'
 
@@ -74,7 +75,8 @@ export default function App() {
   const [activeKidId, setActiveKidId] = useState(loadStoredActiveKid)
   const activeKidIdRef = useRef(loadStoredActiveKid())
   const familyCodeRef = useRef(familyCode)
-  const [awardedSticker, setAwardedSticker] = useState(null)
+  const activeKidRef = useRef(null)
+  const [starsResult, setStarsResult] = useState(null)
 
   useEffect(() => {
     familyCodeRef.current = familyCode
@@ -134,6 +136,10 @@ export default function App() {
 
   const activeKid = kids.find(k => k.id === activeKidId) ?? null
 
+  useEffect(() => {
+    activeKidRef.current = activeKid
+  }, [activeKid])
+
   // Apply the chosen color theme to the whole page and remember it.
   useEffect(() => {
     document.documentElement.dataset.colorTheme = colorTheme
@@ -169,7 +175,7 @@ export default function App() {
     setTotalMs(ms)
     setRemainingMs(ms)
     setPaused(false)
-    setAwardedSticker(null)
+    setStarsResult(null)
     endAtRef.current = Date.now() + ms
     setPhase('running')
   }
@@ -202,11 +208,11 @@ export default function App() {
       if (msLeft <= 0) {
         setPhase('done')
         playChime()
-        const sticker = randomSticker()
-        setAwardedSticker(sticker)
+        const before = activeKidRef.current?.totalStars ?? 0
+        setStarsResult({ before, after: before + STARS_PER_SESSION, starsAdded: STARS_PER_SESSION })
         if (activeKidIdRef.current && familyCodeRef.current) {
-          awardSticker(familyCodeRef.current, activeKidIdRef.current, sticker).catch(err => {
-            console.error('Failed to save sticker:', err)
+          addStars(familyCodeRef.current, activeKidIdRef.current, STARS_PER_SESSION).catch(err => {
+            console.error('Failed to save stars:', err)
           })
         }
         return
@@ -242,10 +248,10 @@ export default function App() {
     )
   }
 
-  if (stage === 'stickers') {
+  if (stage === 'starjar') {
     return (
       <div className="app">
-        <StickersScreen kid={activeKid} onBack={() => setStage('timer')} />
+        <StarJarScreen kid={activeKid} onBack={() => setStage('timer')} />
       </div>
     )
   }
@@ -261,7 +267,7 @@ export default function App() {
           onActivityChange={setActivityId}
           kid={activeKid}
           onSwitchKid={() => setStage('kid-picker')}
-          onViewStickers={() => setStage('stickers')}
+          onViewStarJar={() => setStage('starjar')}
         />
       )}
 
@@ -277,7 +283,7 @@ export default function App() {
       )}
 
       {phase === 'done' && (
-        <DoneScreen activity={activity} sticker={awardedSticker} onRestart={stopTimer} />
+        <DoneScreen activity={activity} starsResult={starsResult} onRestart={stopTimer} />
       )}
     </div>
   )
@@ -291,7 +297,7 @@ function SelectScreen({
   onActivityChange,
   kid,
   onSwitchKid,
-  onViewStickers,
+  onViewStarJar,
 }) {
   return (
     <div className="screen select-screen">
@@ -301,8 +307,8 @@ function SelectScreen({
             <span aria-hidden="true">{kid.avatar}</span> {kid.name}
           </span>
           <div className="kid-bar-actions">
-            <button className="text-btn" onClick={onViewStickers}>
-              🎁 Stickers{kid.stickers?.length ? ` (${kid.stickers.length})` : ''}
+            <button className="text-btn" onClick={onViewStarJar}>
+              ⭐ Star Jar ({kid.totalStars ?? 0})
             </button>
             <button className="text-btn" onClick={onSwitchKid}>
               Switch
@@ -418,7 +424,7 @@ function RunningScreen({ fraction, remainingMs, paused, activity, onTogglePause,
   )
 }
 
-function DoneScreen({ activity, sticker, onRestart }) {
+function DoneScreen({ activity, starsResult, onRestart }) {
   return (
     <div className="screen done-screen">
       <div className="hero-icon" aria-hidden="true">🎉</div>
@@ -426,10 +432,12 @@ function DoneScreen({ activity, sticker, onRestart }) {
       <p className="subtitle">
         {activity ? `Nice work on ${activity.label.toLowerCase()}!` : 'Your focus time is up.'}
       </p>
-      {sticker && (
-        <p className="sticker-award">
-          You earned <span aria-hidden="true">{sticker.emoji}</span> {sticker.name}!
-        </p>
+      {starsResult && (
+        <JarDropAnimation
+          before={starsResult.before}
+          after={starsResult.after}
+          starsAdded={starsResult.starsAdded}
+        />
       )}
       <button className="preset-btn wide-btn" onClick={onRestart}>
         Start Again

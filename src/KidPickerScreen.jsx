@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AVATARS } from './stickers.js'
+import { AVATARS } from './avatars.js'
 import { errorDetail } from './errorMessage.js'
 
 // Lets whoever's using the device pick their profile, or add a new one.
