@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import Matter from 'matter-js'
 import { JAR_CAPACITY } from './stars.js'
+import { tBoth } from './i18n.js'
 
 // A jar where the stars are real physics bodies: they fall in from the
 // neck, tumble, collide, and pile up at the bottom under gravity — and
@@ -240,7 +241,7 @@ export default function PhysicsJar({ count, size = 170, shakeSignal = 0, onShake
         className={onShake ? 'jar-canvas tappable' : 'jar-canvas'}
         onClick={onShake}
         role="img"
-        aria-label={`Jar holding ${count} of ${JAR_CAPACITY} stars`}
+        aria-label={tBoth('jarHolding', { count, capacity: JAR_CAPACITY })}
       />
     </div>
   )

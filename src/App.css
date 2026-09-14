@@ -166,7 +166,9 @@ h1 {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 6px 12px;
+  line-height: 1.15;
+  text-align: left;
   border: none;
   border-radius: 999px;
   background: var(--accent-soft);
@@ -237,7 +239,7 @@ h1 {
 }
 
 .preset-unit {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -248,8 +250,10 @@ h1 {
   grid-column: 1 / -1;
   width: 100%;
   margin-top: 8px;
-  flex-direction: row;
-  padding: 18px;
+  /* Holds a stacked bilingual pair, so it reads as two centred lines. */
+  flex-direction: column;
+  gap: 1px;
+  padding: 16px 18px;
   font-size: 1.1rem;
   font-weight: 700;
 }
@@ -352,11 +356,54 @@ h1 {
   }
 }
 
+/* ── Bilingual text ──
+   Every label shows Traditional Chinese with English beneath it. The
+   English is sized in `em` so it scales with whatever it sits in — a
+   heading, a button, a caption — and sits quieter so the eye lands on
+   the Chinese first without the English feeling like an afterthought. */
+.t-zh,
+.t-en {
+  display: block;
+}
+
+.t-en {
+  font-size: 0.72em;
+  font-weight: 600;
+  opacity: 0.66;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+}
+
+/* Inside chips and small controls the pair needs to stay compact. */
+.activity-label .t-en,
+.preset-unit .t-en,
+.jar-stat-label .t-en {
+  font-size: 0.82em;
+}
+
+h1 .t-en {
+  margin-top: 2px;
+  font-weight: 700;
+}
+
+/* Compact controls that already carry an emoji or a count around the
+   label read better with the two languages on one line. */
+.bi-inline .t-zh,
+.bi-inline .t-en {
+  display: inline;
+}
+
+.bi-inline .t-en {
+  margin-left: 4px;
+}
+
 /* ── Kid bar (on the select screen) ── */
 .kid-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   width: 100%;
   margin-bottom: 12px;
 }
@@ -365,6 +412,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -386,6 +434,8 @@ h1 {
 
 .kid-bar-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 12px;
 }
 

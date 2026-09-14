@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import AvatarGrid from './AvatarGrid.jsx'
 import { errorDetail } from './errorMessage.js'
+import { T } from './T.jsx'
+import { tBoth } from './i18n.js'
 
 // Lets a kid pick a new avatar for their existing profile. Saves as
 // soon as a new one is tapped — no separate confirm step, matching
@@ -18,7 +20,7 @@ export default function EditAvatarScreen({ kid, onSave, onBack }) {
       await onSave(next)
     } catch (err) {
       console.error('Failed to update avatar:', err)
-      setError(`Couldn't save that right now.${errorDetail(err)} Check your connection and try again.`)
+      setError(tBoth('errSaveAvatar', { detail: errorDetail(err) }))
     } finally {
       setBusy(false)
     }
@@ -27,12 +29,12 @@ export default function EditAvatarScreen({ kid, onSave, onBack }) {
   return (
     <div className="screen">
       <div className="hero-icon" aria-hidden="true">{avatar}</div>
-      <h1>{kid.name}'s Avatar</h1>
-      <p className="subtitle">Pick a new one</p>
+      <h1><T k="avatarTitle" vars={{ name: kid.name }} /></h1>
+      <p className="subtitle"><T k="pickNewAvatar" /></p>
       <AvatarGrid value={avatar} onChange={handlePick} />
       {error && <p className="form-error">{error}</p>}
       <button className="text-btn" onClick={onBack} disabled={busy}>
-        Back
+        <T k="back" />
       </button>
     </div>
   )

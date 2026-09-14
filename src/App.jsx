@@ -4,6 +4,8 @@ import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY } from './themes'
 import { ACTIVITIES, ACTIVITY_STORAGE_KEY } from './activities'
 import { STARS_PER_SESSION } from './stars.js'
 import { errorDetail } from './errorMessage.js'
+import { T } from './T.jsx'
+import { tBoth } from './i18n.js'
 import { loadStoredFamilyCode, storeFamilyCode } from './family.js'
 import { watchKids, addKid, addStars, updateKidAvatar } from './kids.js'
 import FamilySetupScreen from './FamilySetupScreen.jsx'
@@ -110,7 +112,7 @@ export default function App() {
       err => {
         console.error('Failed to load kid profiles:', err)
         setKidsLoaded(true)
-        setKidsError(`Couldn't load your kids' profiles.${errorDetail(err)} Check your connection and try again.`)
+        setKidsError(tBoth('errLoadKids', { detail: errorDetail(err) }))
         setStage(prev => (prev === 'loading-kids' ? 'kid-picker' : prev))
       },
     )
@@ -323,28 +325,28 @@ function SelectScreen({
             <button
               className="kid-bar-avatar"
               onClick={onEditAvatar}
-              aria-label={`Change ${kid.name}'s avatar`}
-              title="Change avatar"
+              aria-label={tBoth('changeAvatarOf', { name: kid.name })}
+              title={tBoth('changeAvatarOf', { name: kid.name })}
             >
               {kid.avatar}
             </button>
             {kid.name}
           </span>
           <div className="kid-bar-actions">
-            <button className="text-btn" onClick={onViewStarJar}>
-              ⭐ Star Jar ({kid.totalStars ?? 0})
+            <button className="text-btn bi-inline" onClick={onViewStarJar}>
+              ⭐ <T k="starJar" /> ({kid.totalStars ?? 0})
             </button>
-            <button className="text-btn" onClick={onSwitchKid}>
-              Switch
+            <button className="text-btn bi-inline" onClick={onSwitchKid}>
+              <T k="switchKid" />
             </button>
           </div>
         </div>
       )}
       <div className="hero-icon" aria-hidden="true">🎯</div>
-      <h1>Focus Time</h1>
-      <p className="subtitle">What are you focusing on? (optional)</p>
+      <h1><T k="focusTime" /></h1>
+      <p className="subtitle"><T k="whatFocusingOn" /></p>
       <ActivityPicker value={activityId} onChange={onActivityChange} />
-      <p className="subtitle">Pick how long you want to focus</p>
+      <p className="subtitle"><T k="pickHowLong" /></p>
       <div className="preset-grid">
         {PRESETS.map(minutes => (
           <button
@@ -353,7 +355,7 @@ function SelectScreen({
             onClick={() => onSelect(minutes)}
           >
             <span className="preset-number">{minutes}</span>
-            <span className="preset-unit">min</span>
+            <span className="preset-unit"><T k="minutes" /></span>
           </button>
         ))}
       </div>
@@ -364,7 +366,7 @@ function SelectScreen({
 
 function ActivityPicker({ value, onChange }) {
   return (
-    <div className="activity-picker" role="radiogroup" aria-label="Activity">
+    <div className="activity-picker" role="radiogroup" aria-label={tBoth('activityLabel')}>
       {ACTIVITIES.map(activity => (
         <button
           key={activity.id}
@@ -374,7 +376,10 @@ function ActivityPicker({ value, onChange }) {
           onClick={() => onChange(value === activity.id ? null : activity.id)}
         >
           <span className="activity-emoji" aria-hidden="true">{activity.emoji}</span>
-          <span className="activity-label">{activity.label}</span>
+          <span className="activity-label">
+            <span className="t-zh" lang="zh-Hant">{activity.label.zh}</span>
+            <span className="t-en" lang="en">{activity.label.en}</span>
+          </span>
         </button>
       ))}
     </div>
@@ -383,7 +388,7 @@ function ActivityPicker({ value, onChange }) {
 
 function ThemePicker({ value, onChange }) {
   return (
-    <div className="theme-picker" role="radiogroup" aria-label="Color theme">
+    <div className="theme-picker" role="radiogroup" aria-label={tBoth('colorTheme')}>
       {THEMES.map(theme => (
         <button
           key={theme.id}
@@ -391,7 +396,7 @@ function ThemePicker({ value, onChange }) {
           style={{ '--swatch-color': theme.swatch }}
           role="radio"
           aria-checked={value === theme.id}
-          aria-label={theme.name}
+          aria-label={`${theme.name.zh} / ${theme.name.en}`}
           onClick={() => onChange(theme.id)}
         />
       ))}
@@ -415,7 +420,9 @@ function RunningScreen({ fraction, remainingMs, paused, activity, onTogglePause,
     <div className="screen running-screen">
       {activity && (
         <p className="activity-tag">
-          <span aria-hidden="true">{activity.emoji}</span> {activity.label}
+          <span aria-hidden="true">{activity.emoji}</span>{' '}
+          <span className="t-zh" lang="zh-Hant">{activity.label.zh}</span>
+          <span className="t-en" lang="en">{activity.label.en}</span>
         </p>
       )}
       <div
@@ -434,13 +441,13 @@ function RunningScreen({ fraction, remainingMs, paused, activity, onTogglePause,
           size={300}
         />
       </div>
-      <p className="running-hint">{paused ? 'Paused' : 'Stay focused!'}</p>
-      <p className="peek-hint">👆 Hold the circle to peek at the time</p>
+      <p className="running-hint"><T k={paused ? 'paused' : 'stayFocused'} /></p>
+      <p className="peek-hint"><T k="peekHint" /></p>
       <div className="controls">
-        <button className="icon-btn" onClick={onTogglePause} aria-label={paused ? 'Resume' : 'Pause'}>
+        <button className="icon-btn" onClick={onTogglePause} aria-label={tBoth(paused ? 'resume' : 'pause')}>
           {paused ? '▶' : '⏸'}
         </button>
-        <button className="icon-btn stop-btn" onClick={onStop} aria-label="Stop">
+        <button className="icon-btn stop-btn" onClick={onStop} aria-label={tBoth('stop')}>
           ✕
         </button>
       </div>
@@ -452,9 +459,9 @@ function DoneScreen({ activity, starsResult, onRestart }) {
   return (
     <div className="screen done-screen">
       <div className="hero-icon" aria-hidden="true">🎉</div>
-      <h1>Great job!</h1>
+      <h1><T k="greatJob" /></h1>
       <p className="subtitle">
-        {activity ? `Nice work on ${activity.label.toLowerCase()}!` : 'Your focus time is up.'}
+        {activity ? <T k="niceWorkOn" vars={{ activity: activity.label }} /> : <T k="timeIsUp" />}
       </p>
       {starsResult && (
         <JarDropAnimation
@@ -464,7 +471,7 @@ function DoneScreen({ activity, starsResult, onRestart }) {
         />
       )}
       <button className="preset-btn wide-btn" onClick={onRestart}>
-        Start Again
+        <T k="startAgain" />
       </button>
     </div>
   )
