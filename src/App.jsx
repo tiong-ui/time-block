@@ -2,12 +2,26 @@ import { useEffect, useRef, useState } from 'react'
 import { PRESETS } from './presets'
 import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY } from './themes'
 import { ACTIVITIES, ACTIVITY_STORAGE_KEY } from './activities'
+import { randomSticker } from './stickers.js'
+import { loadStoredFamilyCode, storeFamilyCode } from './family.js'
+import { watchKids, addKid, awardSticker } from './kids.js'
+import FamilySetupScreen from './FamilySetupScreen.jsx'
+import KidPickerScreen from './KidPickerScreen.jsx'
+import StickersScreen from './StickersScreen.jsx'
 import PieTimer from './PieTimer'
 import { playChime } from './chime'
 import './App.css'
 
-// App states: 'select' (choose a duration) -> 'running' (counting down,
-// possibly paused) -> 'done' (celebration screen)
+// Outer stages: 'family-setup' (no family code yet) -> 'kid-picker'
+// (choose/add who's using the device) -> 'timer' (the focus timer
+// itself) -> 'stickers' (view a kid's collection), switchable back to
+// 'kid-picker' at any time from the timer's select screen.
+//
+// Within 'timer', a separate state machine runs: 'select' (choose a
+// duration) -> 'running' (counting down, possibly paused) -> 'done'
+// (celebration screen, sticker awarded).
+
+const ACTIVE_KID_STORAGE_KEY = 'focus-timer-active-kid'
 
 function formatTime(ms) {
   const totalSeconds = Math.ceil(ms / 1000)
@@ -34,13 +48,87 @@ function loadStoredActivity() {
   }
 }
 
+function loadStoredActiveKid() {
+  try {
+    return localStorage.getItem(ACTIVE_KID_STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
+function storeActiveKid(kidId) {
+  try {
+    localStorage.setItem(ACTIVE_KID_STORAGE_KEY, kidId)
+  } catch {
+    // Storage can be unavailable (private browsing); choice just won't persist.
+  }
+}
+
 export default function App() {
+  const [familyCode, setFamilyCode] = useState(loadStoredFamilyCode)
+  const [stage, setStage] = useState(() => (loadStoredFamilyCode() ? 'loading-kids' : 'family-setup'))
+  const [kids, setKids] = useState([])
+  const [kidsLoaded, setKidsLoaded] = useState(false)
+  const [activeKidId, setActiveKidId] = useState(loadStoredActiveKid)
+  const activeKidIdRef = useRef(loadStoredActiveKid())
+  const familyCodeRef = useRef(familyCode)
+  const [awardedSticker, setAwardedSticker] = useState(null)
+
+  useEffect(() => {
+    familyCodeRef.current = familyCode
+  }, [familyCode])
+
   const [phase, setPhase] = useState('select')
   const [totalMs, setTotalMs] = useState(0)
   const [remainingMs, setRemainingMs] = useState(0)
   const [paused, setPaused] = useState(false)
   const [colorTheme, setColorTheme] = useState(loadStoredTheme)
   const [activityId, setActivityId] = useState(loadStoredActivity)
+
+  // Subscribe to this family's kid list once we have a code, and
+  // auto-advance out of the loading state the first time data arrives.
+  useEffect(() => {
+    if (!familyCode) return undefined
+    const unsubscribe = watchKids(
+      familyCode,
+      list => {
+        setKids(list)
+        setKidsLoaded(true)
+        setStage(prev => {
+          if (prev !== 'loading-kids') return prev
+          const stillHere = activeKidIdRef.current && list.some(k => k.id === activeKidIdRef.current)
+          return stillHere ? 'timer' : 'kid-picker'
+        })
+      },
+      err => {
+        console.error('Failed to load kid profiles:', err)
+        setKidsLoaded(true)
+        setStage(prev => (prev === 'loading-kids' ? 'kid-picker' : prev))
+      },
+    )
+    return unsubscribe
+  }, [familyCode])
+
+  function handleFamilyReady(code) {
+    storeFamilyCode(code)
+    setFamilyCode(code)
+    setStage('loading-kids')
+  }
+
+  function handleSelectKid(kidId) {
+    activeKidIdRef.current = kidId
+    setActiveKidId(kidId)
+    storeActiveKid(kidId)
+    setPhase('select')
+    setStage('timer')
+  }
+
+  async function handleAddKid({ name, avatar }) {
+    const kidId = await addKid(familyCode, { name, avatar })
+    handleSelectKid(kidId)
+  }
+
+  const activeKid = kids.find(k => k.id === activeKidId) ?? null
 
   // Apply the chosen color theme to the whole page and remember it.
   useEffect(() => {
@@ -77,6 +165,7 @@ export default function App() {
     setTotalMs(ms)
     setRemainingMs(ms)
     setPaused(false)
+    setAwardedSticker(null)
     endAtRef.current = Date.now() + ms
     setPhase('running')
   }
@@ -109,6 +198,13 @@ export default function App() {
       if (msLeft <= 0) {
         setPhase('done')
         playChime()
+        const sticker = randomSticker()
+        setAwardedSticker(sticker)
+        if (activeKidIdRef.current && familyCodeRef.current) {
+          awardSticker(familyCodeRef.current, activeKidIdRef.current, sticker).catch(err => {
+            console.error('Failed to save sticker:', err)
+          })
+        }
         return
       }
       rafRef.current = requestAnimationFrame(tick)
@@ -120,6 +216,35 @@ export default function App() {
 
   const fraction = totalMs > 0 ? remainingMs / totalMs : 0
 
+  if (stage === 'family-setup') {
+    return (
+      <div className="app">
+        <FamilySetupScreen onFamilyReady={handleFamilyReady} />
+      </div>
+    )
+  }
+
+  if (stage === 'loading-kids' || stage === 'kid-picker') {
+    return (
+      <div className="app">
+        <KidPickerScreen
+          kids={kids}
+          kidsLoaded={stage !== 'loading-kids' && kidsLoaded}
+          onSelectKid={handleSelectKid}
+          onAddKid={handleAddKid}
+        />
+      </div>
+    )
+  }
+
+  if (stage === 'stickers') {
+    return (
+      <div className="app">
+        <StickersScreen kid={activeKid} onBack={() => setStage('timer')} />
+      </div>
+    )
+  }
+
   return (
     <div className="app">
       {phase === 'select' && (
@@ -129,6 +254,9 @@ export default function App() {
           onColorThemeChange={setColorTheme}
           activityId={activityId}
           onActivityChange={setActivityId}
+          kid={activeKid}
+          onSwitchKid={() => setStage('kid-picker')}
+          onViewStickers={() => setStage('stickers')}
         />
       )}
 
@@ -144,15 +272,39 @@ export default function App() {
       )}
 
       {phase === 'done' && (
-        <DoneScreen activity={activity} onRestart={stopTimer} />
+        <DoneScreen activity={activity} sticker={awardedSticker} onRestart={stopTimer} />
       )}
     </div>
   )
 }
 
-function SelectScreen({ onSelect, colorTheme, onColorThemeChange, activityId, onActivityChange }) {
+function SelectScreen({
+  onSelect,
+  colorTheme,
+  onColorThemeChange,
+  activityId,
+  onActivityChange,
+  kid,
+  onSwitchKid,
+  onViewStickers,
+}) {
   return (
     <div className="screen select-screen">
+      {kid && (
+        <div className="kid-bar">
+          <span className="kid-bar-name">
+            <span aria-hidden="true">{kid.avatar}</span> {kid.name}
+          </span>
+          <div className="kid-bar-actions">
+            <button className="text-btn" onClick={onViewStickers}>
+              🎁 Stickers{kid.stickers?.length ? ` (${kid.stickers.length})` : ''}
+            </button>
+            <button className="text-btn" onClick={onSwitchKid}>
+              Switch
+            </button>
+          </div>
+        </div>
+      )}
       <div className="hero-icon" aria-hidden="true">🎯</div>
       <h1>Focus Time</h1>
       <p className="subtitle">What are you focusing on? (optional)</p>
@@ -261,7 +413,7 @@ function RunningScreen({ fraction, remainingMs, paused, activity, onTogglePause,
   )
 }
 
-function DoneScreen({ activity, onRestart }) {
+function DoneScreen({ activity, sticker, onRestart }) {
   return (
     <div className="screen done-screen">
       <div className="hero-icon" aria-hidden="true">🎉</div>
@@ -269,6 +421,11 @@ function DoneScreen({ activity, onRestart }) {
       <p className="subtitle">
         {activity ? `Nice work on ${activity.label.toLowerCase()}!` : 'Your focus time is up.'}
       </p>
+      {sticker && (
+        <p className="sticker-award">
+          You earned <span aria-hidden="true">{sticker.emoji}</span> {sticker.name}!
+        </p>
+      )}
       <button className="preset-btn wide-btn" onClick={onRestart}>
         Start Again
       </button>
