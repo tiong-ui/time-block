@@ -18,6 +18,15 @@ export const STRINGS = {
   resume: { zh: '繼續', en: 'Resume' },
   stop: { zh: '停止', en: 'Stop' },
 
+  // HIIT
+  exerciseDuration: { zh: '運動多久', en: 'Exercise for' },
+  restDuration: { zh: '休息多久', en: 'Rest for' },
+  seconds: { zh: '{count} 秒', en: '{count}s' },
+  workNow: { zh: '運動！', en: 'Work!' },
+  restNow: { zh: '休息一下', en: 'Rest' },
+  roundNumber: { zh: '第 {number} 回合', en: 'Round {number}' },
+  totalLeft: { zh: '總共還剩 {time}', en: '{time} left in total' },
+
   // Done
   greatJob: { zh: '做得很棒！', en: 'Great job!' },
   niceWorkOn: { zh: '{activity}完成囉！', en: 'Nice work on {activity}!' },

@@ -9,6 +9,8 @@ export const ACTIVITIES = [
   { id: 'tidy', label: { zh: '整理房間', en: 'Tidy Up' }, emoji: '🧹' },
   { id: 'mealtime', label: { zh: '吃飯', en: 'Mealtime' }, emoji: '🍽️' },
   { id: 'quietplay', label: { zh: '安靜玩', en: 'Quiet Play' }, emoji: '🧩' },
+  // Not just a tag: picking this runs the timer as work/rest intervals.
+  { id: 'hiit', label: { zh: '間歇運動', en: 'HIIT' }, emoji: '💪', intervals: true },
 ]
 
 export const ACTIVITY_STORAGE_KEY = 'focus-timer-last-activity'

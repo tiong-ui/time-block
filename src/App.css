@@ -206,6 +206,67 @@ h1 {
   margin-bottom: 8px;
 }
 
+/* ── HIIT interval setup ── */
+.hiit-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 12px;
+  margin-bottom: 20px;
+  border-radius: 18px;
+  background: var(--accent-soft);
+}
+
+.seconds-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.seconds-label {
+  color: var(--accent-soft-ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.seconds-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.seconds-chip {
+  flex: 1 1 auto;
+  min-width: 56px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--accent-soft-ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.seconds-chip:hover {
+  transform: scale(1.04);
+}
+
+.seconds-chip.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.round-tag {
+  color: var(--accent-soft-ink);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
 /* ── Select screen ── */
 .preset-grid {
   display: grid;

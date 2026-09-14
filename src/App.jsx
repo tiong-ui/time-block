@@ -2,6 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { PRESETS } from './presets'
 import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY } from './themes'
 import { ACTIVITIES, ACTIVITY_STORAGE_KEY } from './activities'
+import {
+  HIIT_ACTIVITY_ID,
+  EXERCISE_OPTIONS,
+  REST_OPTIONS,
+  EXERCISE_STORAGE_KEY,
+  REST_STORAGE_KEY,
+  loadStoredExerciseSec,
+  loadStoredRestSec,
+  storeSeconds,
+  nextInterval,
+} from './hiit.js'
 import { STARS_PER_SESSION } from './stars.js'
 import { errorDetail } from './errorMessage.js'
 import { T } from './T.jsx'
@@ -14,7 +25,7 @@ import StarJarScreen from './StarJarScreen.jsx'
 import EditAvatarScreen from './EditAvatarScreen.jsx'
 import JarDropAnimation from './JarDropAnimation.jsx'
 import PieTimer from './PieTimer'
-import { playChime } from './chime'
+import { playChime, playIntervalCue } from './chime'
 import './App.css'
 
 // Outer stages: 'family-setup' (no family code yet) -> 'kid-picker'
@@ -92,6 +103,17 @@ export default function App() {
   const [paused, setPaused] = useState(false)
   const [colorTheme, setColorTheme] = useState(loadStoredTheme)
   const [activityId, setActivityId] = useState(loadStoredActivity)
+  const [exerciseSec, setExerciseSec] = useState(loadStoredExerciseSec)
+  const [restSec, setRestSec] = useState(loadStoredRestSec)
+
+  // HIIT only: which half of the cycle we're in, and how far through it.
+  const [intervalKind, setIntervalKind] = useState('work')
+  const [intervalRemainingMs, setIntervalRemainingMs] = useState(0)
+  const [intervalTotalMs, setIntervalTotalMs] = useState(0)
+  const [roundNumber, setRoundNumber] = useState(1)
+  const intervalEndAtRef = useRef(0)
+  const intervalTotalMsRef = useRef(0)
+  const intervalKindRef = useRef('work')
 
   // Subscribe to this family's kid list once we have a code, and
   // auto-advance out of the loading state the first time data arrives.
@@ -171,7 +193,26 @@ export default function App() {
     }
   }, [activityId])
 
+  useEffect(() => {
+    storeSeconds(EXERCISE_STORAGE_KEY, exerciseSec)
+  }, [exerciseSec])
+
+  useEffect(() => {
+    storeSeconds(REST_STORAGE_KEY, restSec)
+  }, [restSec])
+
   const activity = ACTIVITIES.find(a => a.id === activityId) ?? null
+  const isHiit = activityId === HIIT_ACTIVITY_ID
+
+  // The countdown loop reads these without needing to re-arm itself.
+  const isHiitRef = useRef(isHiit)
+  const exerciseSecRef = useRef(exerciseSec)
+  const restSecRef = useRef(restSec)
+  useEffect(() => {
+    isHiitRef.current = isHiit
+    exerciseSecRef.current = exerciseSec
+    restSecRef.current = restSec
+  }, [isHiit, exerciseSec, restSec])
 
   // Wall-clock bookkeeping so the countdown stays accurate even if the
   // tab is backgrounded and rAF/timers get throttled.
@@ -180,11 +221,26 @@ export default function App() {
 
   function startTimer(minutes) {
     const ms = minutes * 60 * 1000
+    const now = Date.now()
     setTotalMs(ms)
     setRemainingMs(ms)
     setPaused(false)
     setStarsResult(null)
-    endAtRef.current = Date.now() + ms
+    endAtRef.current = now + ms
+
+    if (activityId === HIIT_ACTIVITY_ID) {
+      // Open on a work interval, never running past the session end.
+      const workMs = Math.min(exerciseSec * 1000, ms)
+      intervalKindRef.current = 'work'
+      intervalTotalMsRef.current = workMs
+      intervalEndAtRef.current = now + workMs
+      setIntervalTotalMs(workMs)
+      setIntervalKind('work')
+      setIntervalRemainingMs(workMs)
+      setRoundNumber(1)
+      playIntervalCue('work')
+    }
+
     setPhase('running')
   }
 
@@ -192,8 +248,10 @@ export default function App() {
     setPaused(prev => {
       const resuming = prev
       if (resuming) {
-        // Recompute the end time from where we left off.
-        endAtRef.current = Date.now() + remainingMs
+        // Recompute both clocks from where we left off.
+        const now = Date.now()
+        endAtRef.current = now + remainingMs
+        intervalEndAtRef.current = now + intervalRemainingMs
       }
       // When pausing, the countdown loop simply stops running, so
       // remainingMs stays frozen at its last tick value.
@@ -211,8 +269,33 @@ export default function App() {
     if (phase !== 'running' || paused) return undefined
 
     function tick() {
-      const msLeft = Math.max(0, endAtRef.current - Date.now())
+      const now = Date.now()
+      const msLeft = Math.max(0, endAtRef.current - now)
       setRemainingMs(msLeft)
+
+      if (msLeft > 0 && isHiitRef.current) {
+        let intervalLeft = intervalEndAtRef.current - now
+        if (intervalLeft <= 0) {
+          // Flip to the other half of the cycle, clipped so the last
+          // interval never runs past the end of the session.
+          const { kind: nextKind, durationMs: nextMs } = nextInterval({
+            kind: intervalKindRef.current,
+            exerciseSec: exerciseSecRef.current,
+            restSec: restSecRef.current,
+            sessionLeftMs: msLeft,
+          })
+          intervalKindRef.current = nextKind
+          intervalTotalMsRef.current = nextMs
+          intervalEndAtRef.current = now + nextMs
+          intervalLeft = nextMs
+          setIntervalTotalMs(nextMs)
+          setIntervalKind(nextKind)
+          if (nextKind === 'work') setRoundNumber(r => r + 1)
+          playIntervalCue(nextKind)
+        }
+        setIntervalRemainingMs(intervalLeft)
+      }
+
       if (msLeft <= 0) {
         setPhase('done')
         playChime()
@@ -232,7 +315,9 @@ export default function App() {
     return () => cancelAnimationFrame(rafRef.current)
   }, [phase, paused])
 
-  const fraction = totalMs > 0 ? remainingMs / totalMs : 0
+  const fraction = isHiit
+    ? (intervalTotalMs > 0 ? intervalRemainingMs / intervalTotalMs : 0)
+    : (totalMs > 0 ? remainingMs / totalMs : 0)
 
   if (stage === 'family-setup') {
     return (
@@ -285,15 +370,24 @@ export default function App() {
           onSwitchKid={() => setStage('kid-picker')}
           onViewStarJar={() => setStage('starjar')}
           onEditAvatar={() => setStage('edit-avatar')}
+          isHiit={isHiit}
+          exerciseSec={exerciseSec}
+          onExerciseSecChange={setExerciseSec}
+          restSec={restSec}
+          onRestSecChange={setRestSec}
         />
       )}
 
       {phase === 'running' && (
         <RunningScreen
           fraction={fraction}
-          remainingMs={remainingMs}
+          remainingMs={isHiit ? intervalRemainingMs : remainingMs}
+          totalRemainingMs={remainingMs}
           paused={paused}
           activity={activity}
+          isHiit={isHiit}
+          intervalKind={intervalKind}
+          roundNumber={roundNumber}
           onTogglePause={togglePause}
           onStop={stopTimer}
         />
@@ -316,6 +410,11 @@ function SelectScreen({
   onSwitchKid,
   onViewStarJar,
   onEditAvatar,
+  isHiit,
+  exerciseSec,
+  onExerciseSecChange,
+  restSec,
+  onRestSecChange,
 }) {
   return (
     <div className="screen select-screen">
@@ -346,6 +445,22 @@ function SelectScreen({
       <h1><T k="focusTime" /></h1>
       <p className="subtitle"><T k="whatFocusingOn" /></p>
       <ActivityPicker value={activityId} onChange={onActivityChange} />
+      {isHiit && (
+        <div className="hiit-setup">
+          <SecondsRow
+            labelKey="exerciseDuration"
+            options={EXERCISE_OPTIONS}
+            value={exerciseSec}
+            onChange={onExerciseSecChange}
+          />
+          <SecondsRow
+            labelKey="restDuration"
+            options={REST_OPTIONS}
+            value={restSec}
+            onChange={onRestSecChange}
+          />
+        </div>
+      )}
       <p className="subtitle"><T k="pickHowLong" /></p>
       <div className="preset-grid">
         {PRESETS.map(minutes => (
@@ -360,6 +475,27 @@ function SelectScreen({
         ))}
       </div>
       <ThemePicker value={colorTheme} onChange={onColorThemeChange} />
+    </div>
+  )
+}
+
+function SecondsRow({ labelKey, options, value, onChange }) {
+  return (
+    <div className="seconds-row">
+      <p className="seconds-label"><T k={labelKey} /></p>
+      <div className="seconds-options" role="radiogroup" aria-label={tBoth(labelKey)}>
+        {options.map(sec => (
+          <button
+            key={sec}
+            className={`seconds-chip${value === sec ? ' active' : ''}`}
+            role="radio"
+            aria-checked={value === sec}
+            onClick={() => onChange(sec)}
+          >
+            <T k="seconds" vars={{ count: sec }} />
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -404,7 +540,18 @@ function ThemePicker({ value, onChange }) {
   )
 }
 
-function RunningScreen({ fraction, remainingMs, paused, activity, onTogglePause, onStop }) {
+function RunningScreen({
+  fraction,
+  remainingMs,
+  totalRemainingMs,
+  paused,
+  activity,
+  isHiit,
+  intervalKind,
+  roundNumber,
+  onTogglePause,
+  onStop,
+}) {
   const [peeking, setPeeking] = useState(false)
 
   function startPeek(e) {
@@ -416,8 +563,17 @@ function RunningScreen({ fraction, remainingMs, paused, activity, onTogglePause,
     setPeeking(false)
   }
 
+  // Rest reads as a breather, so it borrows the calmer paused tone.
+  const resting = isHiit && intervalKind === 'rest'
+  const pieColor = paused || resting ? 'var(--accent-pale)' : 'var(--accent)'
+  let hintKey = paused ? 'paused' : 'stayFocused'
+  if (isHiit && !paused) hintKey = resting ? 'restNow' : 'workNow'
+
   return (
     <div className="screen running-screen">
+      {isHiit && !paused && (
+        <p className="round-tag"><T k="roundNumber" vars={{ number: roundNumber }} /></p>
+      )}
       {activity && (
         <p className="activity-tag">
           <span aria-hidden="true">{activity.emoji}</span>{' '}
@@ -435,14 +591,20 @@ function RunningScreen({ fraction, remainingMs, paused, activity, onTogglePause,
       >
         <PieTimer
           fraction={fraction}
-          color={paused ? 'var(--accent-pale)' : 'var(--accent)'}
+          color={pieColor}
           trackColor="var(--accent-soft)"
           overlayText={peeking ? formatTime(remainingMs) : null}
           size={300}
         />
       </div>
-      <p className="running-hint"><T k={paused ? 'paused' : 'stayFocused'} /></p>
-      <p className="peek-hint"><T k="peekHint" /></p>
+      <p className="running-hint"><T k={hintKey} /></p>
+      {isHiit ? (
+        <p className="peek-hint">
+          <T k="totalLeft" vars={{ time: formatTime(totalRemainingMs) }} />
+        </p>
+      ) : (
+        <p className="peek-hint"><T k="peekHint" /></p>
+      )}
       <div className="controls">
         <button className="icon-btn" onClick={onTogglePause} aria-label={tBoth(paused ? 'resume' : 'pause')}>
           {paused ? '▶' : '⏸'}

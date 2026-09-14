@@ -142,3 +142,33 @@ export function playChime(tuneIndex) {
     })
   })
 }
+
+// Interval cues for HIIT: a rising double beep to start working, a
+// softer falling note to drop into rest. Kept short and distinct —
+// they fire mid-workout, when nobody is looking at the screen.
+export function playIntervalCue(kind) {
+  const audioCtx = getContext()
+  if (!audioCtx) return
+  if (audioCtx.state === 'suspended') audioCtx.resume()
+
+  const now = audioCtx.currentTime
+  const notes =
+    kind === 'work'
+      ? [{ freq: G5, time: 0, duration: 0.12 }, { freq: C6, time: 0.13, duration: 0.22 }]
+      : [{ freq: E5, time: 0, duration: 0.3 }]
+
+  notes.forEach(({ freq, time, duration }) => {
+    const start = now + time
+    const osc = audioCtx.createOscillator()
+    const gain = audioCtx.createGain()
+    osc.type = kind === 'work' ? 'triangle' : 'sine'
+    osc.frequency.value = freq
+    gain.gain.setValueAtTime(0, start)
+    gain.gain.linearRampToValueAtTime(0.25, start + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.001, start + duration)
+    osc.connect(gain)
+    gain.connect(audioCtx.destination)
+    osc.start(start)
+    osc.stop(start + duration)
+  })
+}
