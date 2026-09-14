@@ -3,6 +3,7 @@ import { PRESETS } from './presets'
 import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY } from './themes'
 import { ACTIVITIES, ACTIVITY_STORAGE_KEY } from './activities'
 import { randomSticker } from './stickers.js'
+import { errorDetail } from './errorMessage.js'
 import { loadStoredFamilyCode, storeFamilyCode } from './family.js'
 import { watchKids, addKid, awardSticker } from './kids.js'
 import FamilySetupScreen from './FamilySetupScreen.jsx'
@@ -69,6 +70,7 @@ export default function App() {
   const [stage, setStage] = useState(() => (loadStoredFamilyCode() ? 'loading-kids' : 'family-setup'))
   const [kids, setKids] = useState([])
   const [kidsLoaded, setKidsLoaded] = useState(false)
+  const [kidsError, setKidsError] = useState('')
   const [activeKidId, setActiveKidId] = useState(loadStoredActiveKid)
   const activeKidIdRef = useRef(loadStoredActiveKid())
   const familyCodeRef = useRef(familyCode)
@@ -94,6 +96,7 @@ export default function App() {
       list => {
         setKids(list)
         setKidsLoaded(true)
+        setKidsError('')
         setStage(prev => {
           if (prev !== 'loading-kids') return prev
           const stillHere = activeKidIdRef.current && list.some(k => k.id === activeKidIdRef.current)
@@ -103,6 +106,7 @@ export default function App() {
       err => {
         console.error('Failed to load kid profiles:', err)
         setKidsLoaded(true)
+        setKidsError(`Couldn't load your kids' profiles.${errorDetail(err)} Check your connection and try again.`)
         setStage(prev => (prev === 'loading-kids' ? 'kid-picker' : prev))
       },
     )
@@ -230,6 +234,7 @@ export default function App() {
         <KidPickerScreen
           kids={kids}
           kidsLoaded={stage !== 'loading-kids' && kidsLoaded}
+          loadError={kidsError}
           onSelectKid={handleSelectKid}
           onAddKid={handleAddKid}
         />
