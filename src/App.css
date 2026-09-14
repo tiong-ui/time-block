@@ -153,6 +153,50 @@ h1 {
   margin-bottom: 16px;
 }
 
+/* ── Activity picker ── */
+.activity-picker {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.activity-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-soft-ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.activity-chip:hover {
+  transform: scale(1.05);
+}
+
+.activity-chip.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.activity-emoji {
+  font-size: 1rem;
+}
+
+.activity-tag {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
 /* ── Select screen ── */
 .preset-grid {
   display: grid;
