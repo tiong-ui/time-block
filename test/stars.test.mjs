@@ -3,7 +3,7 @@
 // lives behind Firestore — so the maths is pure and checked here.
 import { starBalance, canAfford, jarStats, JAR_CAPACITY } from '../src/stars.js'
 import { groupByDay, ledgerTotals } from '../src/ledger.js'
-import { validateReward } from '../src/rewards.js'
+import { validateReward, labelToText, editedLabel } from '../src/rewards.js'
 
 let pass = 0, fail = 0
 const eq = (a, e, n) => { const ok = JSON.stringify(a) === JSON.stringify(e); ok ? pass++ : fail++
@@ -54,5 +54,19 @@ eq(groupByDay([], now), [], 'an empty log groups into nothing')
 
 eq(ledgerTotals(entries), { earned: 15, spent: 100 }, 'totals split earning from spending')
 eq(ledgerTotals([]), { earned: 0, spent: 0 }, 'an empty log totals zero')
+
+// ── Editing a reward ─────────────────────────────────────────────────
+// The starters ship in both languages. Re-pricing one must not quietly
+// throw its English half away, but renaming it should make it the
+// parent's own words.
+const starter = { zh: '去公園玩', en: 'A trip to the park' }
+eq(labelToText(starter), '去公園玩', 'the edit form starts from the Chinese half')
+eq(labelToText('看卡通'), '看卡通', "and from a family's own wording as typed")
+eq(labelToText(null), '', 'a reward with no label does not crash the form')
+
+eq(editedLabel(starter, '去公園玩'), starter, 'an untouched name keeps both languages')
+eq(editedLabel(starter, '  去公園玩  '), starter, 'and stray spaces are not a rename')
+eq(editedLabel(starter, '去動物園'), '去動物園', 'a real rename becomes what the parent typed')
+eq(editedLabel('看卡通', '看兩集卡通'), '看兩集卡通', 'renaming a typed reward just replaces it')
 
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)

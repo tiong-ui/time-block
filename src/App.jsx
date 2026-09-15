@@ -109,6 +109,10 @@ export default function App() {
   // Saving a kid's stars can fail (no network, rules) long after the
   // countdown ends, so the done screen has to be able to say so.
   const [starsError, setStarsError] = useState(null)
+  // Unlocking the grown-up PIN covers the whole star area, so a parent
+  // adding stars and then re-pricing a reward types it once. Going back
+  // to the timer — where a kid takes the phone again — re-locks it.
+  const [grownUpUnlocked, setGrownUpUnlocked] = useState(false)
 
   useEffect(() => {
     familyCodeRef.current = familyCode
@@ -503,7 +507,7 @@ export default function App() {
       <div className="app">
         <StarJarScreen
           kid={activeKid}
-          onBack={() => setStage('timer')}
+          onBack={() => { setGrownUpUnlocked(false); setStage('timer') }}
           onViewLog={() => setStage('starlog')}
           onViewRewards={() => setStage('rewards')}
           onGrownUp={() => setStage('grownup')}
@@ -523,7 +527,13 @@ export default function App() {
   if (stage === 'grownup') {
     return (
       <div className="app">
-        <GrownUpScreen familyCode={familyCode} kid={activeKid} onBack={() => setStage('starjar')} />
+        <GrownUpScreen
+          familyCode={familyCode}
+          kid={activeKid}
+          unlocked={grownUpUnlocked}
+          onUnlock={() => setGrownUpUnlocked(true)}
+          onBack={() => setStage('starjar')}
+        />
       </div>
     )
   }
@@ -531,7 +541,13 @@ export default function App() {
   if (stage === 'rewards') {
     return (
       <div className="app">
-        <RewardsScreen familyCode={familyCode} kid={activeKid} onBack={() => setStage('starjar')} />
+        <RewardsScreen
+          familyCode={familyCode}
+          kid={activeKid}
+          unlocked={grownUpUnlocked}
+          onUnlock={() => setGrownUpUnlocked(true)}
+          onBack={() => setStage('starjar')}
+        />
       </div>
     )
   }

@@ -7,6 +7,7 @@ import {
   doc,
   getDoc,
   addDoc,
+  updateDoc,
   deleteDoc,
   onSnapshot,
   query,
@@ -75,6 +76,11 @@ export async function addReward(familyCode, { label, emoji, cost }) {
   })
 }
 
+export async function updateReward(familyCode, rewardId, { label, cost }) {
+  await authReady
+  await updateDoc(doc(db, 'families', familyCode, 'rewards', rewardId), { label, cost })
+}
+
 export async function removeReward(familyCode, rewardId) {
   await authReady
   await deleteDoc(doc(db, 'families', familyCode, 'rewards', rewardId))
@@ -96,4 +102,21 @@ export function validateReward({ name, cost }) {
   if (!Number.isInteger(stars) || stars <= 0) return { ok: false, reason: 'cost-invalid' }
   if (stars > MAX_REWARD_COST) return { ok: false, reason: 'cost-too-big' }
   return { ok: true, value: { label: trimmed, cost: stars } }
+}
+
+// What the edit form should start with. A starter reward carries both
+// languages; anything a family typed carries one.
+export function labelToText(label) {
+  if (isBilingualLabel(label)) return label.zh
+  return label ?? ''
+}
+
+// Re-pricing a starter shouldn't quietly throw away its English half.
+// So an untouched name keeps the label exactly as it was, and only a
+// name the parent actually changed becomes a plain string in whatever
+// language they typed.
+export function editedLabel(original, typedName) {
+  const trimmed = (typedName ?? '').trim()
+  if (trimmed === labelToText(original)) return original
+  return trimmed
 }

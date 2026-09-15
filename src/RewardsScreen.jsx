@@ -4,20 +4,29 @@ import {
   watchRewards,
   seedDefaultRewards,
   addReward,
+  updateReward,
   removeReward,
   validateReward,
+  labelToText,
+  editedLabel,
 } from './rewards.js'
+import { watchFamily, familyHasPin } from './family.js'
 import { redeemReward, NotEnoughStarsError } from './kids.js'
 import { errorDetail } from './errorMessage.js'
 import { tBoth } from './i18n.js'
 import { T, Label } from './T.jsx'
+import { PinGate, PinSetup } from './PinGate.jsx'
 
-// What the stars are for. Earning them is only half a reward system —
-// spending them is the half a kid is actually working towards.
-export default function RewardsScreen({ familyCode, kid, onBack }) {
+// What the stars are for. Redeeming is the kid's to do; the list
+// itself — what's on it and what it costs — is a grown-up's, behind
+// the same PIN as handing out stars. A kid who can re-price "a new
+// toy" to 5 stars has taken the meaning out of the whole thing.
+export default function RewardsScreen({ familyCode, kid, unlocked, onUnlock, onBack }) {
   const [rewards, setRewards] = useState(null)
+  const [family, setFamily] = useState(undefined)
   const [error, setError] = useState(null)
   const [celebrating, setCelebrating] = useState(null)
+  const [gateOpen, setGateOpen] = useState(false)
   const seededRef = useRef(false)
 
   const { balance } = starBalance(kid)
@@ -27,6 +36,11 @@ export default function RewardsScreen({ familyCode, kid, onBack }) {
     return watchRewards(familyCode, setRewards, err =>
       setError(tBoth('errLoadRewards', { detail: errorDetail(err) })),
     )
+  }, [familyCode])
+
+  useEffect(() => {
+    if (!familyCode) return undefined
+    return watchFamily(familyCode, setFamily, () => setFamily(null))
   }, [familyCode])
 
   // A family that has never opened this screen has no rewards to show,
@@ -57,6 +71,11 @@ export default function RewardsScreen({ familyCode, kid, onBack }) {
     }
   }
 
+  function report(err, key) {
+    console.error(key, err)
+    setError(tBoth(key, { detail: errorDetail(err) }))
+  }
+
   return (
     <RewardsView
       kid={kid}
@@ -64,19 +83,32 @@ export default function RewardsScreen({ familyCode, kid, onBack }) {
       balance={balance}
       error={error}
       celebrating={celebrating}
-      onRedeem={handleRedeem}
-      onRemove={rewardId =>
-        removeReward(familyCode, rewardId).catch(err => {
-          console.error('Could not remove reward:', err)
-          setError(tBoth('errAddReward', { detail: errorDetail(err) }))
-        })
+      unlocked={unlocked}
+      gate={
+        gateOpen && family !== undefined
+          ? (familyHasPin(family)
+              ? <PinGate family={family} onUnlocked={() => { setGateOpen(false); onUnlock() }} />
+              : <PinSetup familyCode={familyCode} onSaved={() => { setGateOpen(false); onUnlock() }} />)
+          : null
       }
+      onOpenGate={() => setGateOpen(true)}
+      onRedeem={handleRedeem}
+      onRemove={rewardId => removeReward(familyCode, rewardId).catch(err => report(err, 'errEditReward'))}
       onAdd={async value => {
         try {
           await addReward(familyCode, { ...value, emoji: '🎁' })
         } catch (err) {
-          console.error('Could not add reward:', err)
-          setError(tBoth('errAddReward', { detail: errorDetail(err) }))
+          report(err, 'errAddReward')
+        }
+      }}
+      onEdit={async (reward, value) => {
+        try {
+          await updateReward(familyCode, reward.id, {
+            label: editedLabel(reward.label, value.label),
+            cost: value.cost,
+          })
+        } catch (err) {
+          report(err, 'errEditReward')
         }
       }}
       onBack={onBack}
@@ -85,11 +117,15 @@ export default function RewardsScreen({ familyCode, kid, onBack }) {
 }
 
 // Kept apart from the Firestore work above so the screen can be
-// rendered from a fixed list of rewards, which a test environment can
-// reach and the live collection can't.
-export function RewardsView({ kid, rewards, balance, error, celebrating, onRedeem, onRemove, onAdd, onBack }) {
+// rendered from a fixed list of rewards, locked or unlocked, which a
+// test environment can reach and the live collection can't.
+export function RewardsView({
+  kid, rewards, balance, error, celebrating, unlocked, gate,
+  onOpenGate, onRedeem, onRemove, onAdd, onEdit, onBack,
+}) {
   const [confirming, setConfirming] = useState(null)
   const [adding, setAdding] = useState(false)
+  const [editing, setEditing] = useState(null)
 
   return (
     <div className="screen rewards-screen">
@@ -107,21 +143,38 @@ export function RewardsView({ kid, rewards, balance, error, celebrating, onRedee
             key={reward.id}
             reward={reward}
             balance={balance}
+            unlocked={unlocked}
             celebrating={celebrating === reward.id}
+            editing={editing === reward.id}
             onRedeem={() => setConfirming(reward)}
             onRemove={() => onRemove(reward.id)}
+            onStartEdit={() => setEditing(reward.id)}
+            onCancelEdit={() => setEditing(null)}
+            onSaveEdit={async value => { await onEdit(reward, value); setEditing(null) }}
           />
         ))}
       </ul>
 
-      {adding
-        ? <AddRewardForm
+      {unlocked && (adding
+        ? <RewardForm
+            titleKey="newReward"
+            saveKey="saveReward"
             onCancel={() => setAdding(false)}
-            onAdd={async value => { await onAdd(value); setAdding(false) }}
+            onSave={async value => { await onAdd(value); setAdding(false) }}
           />
         : <button className="text-btn bi-inline" onClick={() => setAdding(true)}>
             <T k="addReward" />
-          </button>}
+          </button>)}
+
+      {gate}
+
+      {/* The way in and out of grown-up mode. Locked, the list is a menu
+          a kid can choose from; unlocked, it's something to be changed. */}
+      {!gate && (unlocked
+        ? <p className="confirm-grownup managing-note"><T k="managingRewards" /></p>
+        : <button className="text-btn bi-inline" onClick={onOpenGate}>
+            <T k="manageRewards" />
+          </button>)}
 
       {confirming && (
         <ConfirmRedeem
@@ -137,25 +190,53 @@ export function RewardsView({ kid, rewards, balance, error, celebrating, onRedee
   )
 }
 
-function RewardRow({ reward, balance, celebrating, onRedeem, onRemove }) {
+function RewardRow({
+  reward, balance, unlocked, celebrating, editing,
+  onRedeem, onRemove, onStartEdit, onCancelEdit, onSaveEdit,
+}) {
   const affordable = canAfford(balance, reward.cost)
   const short = reward.cost - balance
 
+  if (editing) {
+    return (
+      <li className="reward-row">
+        <RewardForm
+          titleKey="editRewardTitle"
+          saveKey="saveChanges"
+          initialName={labelToText(reward.label)}
+          initialCost={String(reward.cost)}
+          onCancel={onCancelEdit}
+          onSave={onSaveEdit}
+        />
+      </li>
+    )
+  }
+
   return (
     <li className={`reward-row${affordable ? ' reward-affordable' : ''}`}>
-      {/* The name gets the full width on its own line — squeezed beside
-          the buttons it wrapped to three lines and read as a puzzle. */}
       <div className="reward-head">
         <span className="reward-emoji" aria-hidden="true">{reward.emoji ?? '🎁'}</span>
         <span className="reward-name"><Label value={reward.label} /></span>
-        <button
-          className="reward-remove"
-          onClick={onRemove}
-          aria-label={tBoth('removeReward', { reward: labelText(reward.label) })}
-          title={tBoth('removeReward', { reward: labelText(reward.label) })}
-        >
-          ✕
-        </button>
+        {unlocked && (
+          <>
+            <button
+              className="reward-remove"
+              onClick={onStartEdit}
+              aria-label={tBoth('editReward', { reward: labelText(reward.label) })}
+              title={tBoth('editReward', { reward: labelText(reward.label) })}
+            >
+              ✏️
+            </button>
+            <button
+              className="reward-remove"
+              onClick={onRemove}
+              aria-label={tBoth('removeReward', { reward: labelText(reward.label) })}
+              title={tBoth('removeReward', { reward: labelText(reward.label) })}
+            >
+              ✕
+            </button>
+          </>
+        )}
       </div>
       <div className="reward-foot">
         <span className="reward-cost bi-inline">
@@ -202,9 +283,11 @@ function ConfirmRedeem({ reward, balance, onCancel, onConfirm }) {
   )
 }
 
-function AddRewardForm({ onAdd, onCancel }) {
-  const [name, setName] = useState('')
-  const [cost, setCost] = useState('')
+// One form for both adding and editing — the fields and the rules are
+// identical, only the wording and what it starts with differ.
+function RewardForm({ titleKey, saveKey, initialName = '', initialCost = '', onSave, onCancel }) {
+  const [name, setName] = useState(initialName)
+  const [cost, setCost] = useState(initialCost)
   const [problem, setProblem] = useState(null)
 
   function handleSubmit(event) {
@@ -215,12 +298,12 @@ function AddRewardForm({ onAdd, onCancel }) {
       return
     }
     setProblem(null)
-    onAdd(result.value)
+    onSave(result.value)
   }
 
   return (
     <form className="add-reward-form" onSubmit={handleSubmit}>
-      <p className="confirm-title"><T k="newReward" /></p>
+      <p className="confirm-title"><T k={titleKey} /></p>
       <input
         className="text-input"
         value={name}
@@ -237,7 +320,7 @@ function AddRewardForm({ onAdd, onCancel }) {
       />
       {problem && <p className="form-error"><T k={problem} /></p>}
       <div className="confirm-actions">
-        <button className="preset-btn wide-btn collect-btn" type="submit"><T k="saveReward" /></button>
+        <button className="preset-btn wide-btn collect-btn" type="submit"><T k={saveKey} /></button>
         <button className="preset-btn wide-btn" type="button" onClick={onCancel}><T k="cancelAdd" /></button>
       </div>
     </form>

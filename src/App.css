@@ -1304,3 +1304,17 @@ h1 .t-en {
 .calendar-day-list {
   margin-top: 14px;
 }
+
+/* Grown-up mode is on: say so plainly, so nobody wonders why a kid's
+   screen suddenly has delete buttons on it. */
+.managing-note {
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* An edit form takes over its row entirely. */
+.reward-row .add-reward-form {
+  margin: 0;
+  padding: 0;
+  background: none;
+}
