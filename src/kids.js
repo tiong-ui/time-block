@@ -51,17 +51,43 @@ export async function addKid(familyCode, { name, avatar }) {
   return ref.id
 }
 
-// The running total and the log entry go up together, so the log can
-// never disagree with the total a kid is looking at.
+// The total and the log entry go up together where they can, so the
+// log doesn't disagree with the number a kid is looking at.
+//
+// But a batch is all-or-nothing, and that cuts the wrong way here: a
+// ledger write the security rules reject takes the stars down with it,
+// and a kid who finished a session loses them. The log is a nice thing
+// to have; the stars are the whole point. So a failed batch falls back
+// to writing the total on its own, and reports that the log entry
+// didn't make it rather than pretending everything is fine.
 export async function addStars(familyCode, kidId, amount, { activityId, minutes, manual, note } = {}) {
   await authReady
-  const batch = writeBatch(db)
-  batch.update(doc(db, 'families', familyCode, 'kids', kidId), { totalStars: increment(amount) })
-  batch.set(
-    newLedgerEntry(familyCode, kidId),
-    earnedEntry({ stars: amount, activityId, minutes, manual, note }),
+  const kidRef = doc(db, 'families', familyCode, 'kids', kidId)
+  const entry = earnedEntry({ stars: amount, activityId, minutes, manual, note })
+
+  return saveTotalEvenIfUnlogged(
+    () => {
+      const batch = writeBatch(db)
+      batch.update(kidRef, { totalStars: increment(amount) })
+      batch.set(newLedgerEntry(familyCode, kidId), entry)
+      return batch.commit()
+    },
+    () => updateDoc(kidRef, { totalStars: increment(amount) }),
   )
-  await batch.commit()
+}
+
+// The rule the stars depend on, kept separate from Firestore so it can
+// be tested without one: try to write both, fall back to the total
+// alone, and only give up if even that fails.
+export async function saveTotalEvenIfUnlogged(writeBoth, writeTotalOnly) {
+  try {
+    await writeBoth()
+    return { logged: true }
+  } catch (err) {
+    console.error('Star ledger entry failed, saving the total on its own:', err)
+    await writeTotalOnly()
+    return { logged: false, logError: err }
+  }
 }
 
 // Spending has to check the balance and deduct it as one indivisible
