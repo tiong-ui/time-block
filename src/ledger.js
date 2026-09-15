@@ -6,8 +6,10 @@ import {
   doc,
   onSnapshot,
   query,
+  where,
   orderBy,
   limit,
+  Timestamp,
   serverTimestamp,
   writeBatch,
 } from 'firebase/firestore'
@@ -117,4 +119,27 @@ export function ledgerTotals(entries) {
     },
     { earned: 0, spent: 0 },
   )
+}
+
+// One month's entries. The list view can live off the most recent
+// hundred, but a calendar someone can page back through can't — so the
+// month on screen is fetched by its own date range. A range and an
+// order on the same field needs no composite index.
+export function watchLedgerMonth(familyCode, kidId, fromMs, toMs, onChange, onError) {
+  let unsubscribe = () => {}
+  authReady
+    .then(() => {
+      unsubscribe = onSnapshot(
+        query(
+          ledgerCollection(familyCode, kidId),
+          where('at', '>=', Timestamp.fromMillis(fromMs)),
+          where('at', '<', Timestamp.fromMillis(toMs)),
+          orderBy('at', 'desc'),
+        ),
+        snap => onChange(snap.docs.map(d => entryFromDoc(d))),
+        onError,
+      )
+    })
+    .catch(onError)
+  return () => unsubscribe()
 }

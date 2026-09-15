@@ -55,6 +55,23 @@ export const STRINGS = {
   earnedSoFar: { zh: '賺到', en: 'Earned' },
   spentSoFar: { zh: '用掉', en: 'Spent' },
 
+  // Used only to ask the browser for an English month name.
+  localeEn: { zh: 'en', en: 'en' },
+  viewList: { zh: '清單', en: 'List' },
+  viewCalendar: { zh: '月曆', en: 'Calendar' },
+  monthLabel: { zh: '{year} 年 {month} 月', en: '{monthName} {year}' },
+  prevMonth: { zh: '上個月', en: 'Previous month' },
+  nextMonth: { zh: '下個月', en: 'Next month' },
+  noStarsThisMonth: { zh: '這個月還沒有星星', en: 'No stars this month yet' },
+  starsOnDay: { zh: '{month}/{day} 得到 {count} 顆', en: '{count} stars on {month}/{day}' },
+  sun: { zh: '日', en: 'Su' },
+  mon: { zh: '一', en: 'Mo' },
+  tue: { zh: '二', en: 'Tu' },
+  wed: { zh: '三', en: 'We' },
+  thu: { zh: '四', en: 'Th' },
+  fri: { zh: '五', en: 'Fr' },
+  sat: { zh: '六', en: 'Sa' },
+
   // Rewards
   rewards: { zh: '兌換獎勵', en: 'Rewards' },
   rewardsTitle: { zh: '{name}的獎勵', en: "{name}'s Rewards" },
