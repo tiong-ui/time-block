@@ -31,6 +31,7 @@ export const STRINGS = {
   greatJob: { zh: '做得很棒！', en: 'Great job!' },
   niceWorkOn: { zh: '{activity}完成囉！', en: 'Nice work on {activity}!' },
   timeIsUp: { zh: '專注時間結束了', en: 'Your focus time is up.' },
+  turnOffAlarm: { zh: '🔔 關掉鈴聲', en: '🔔 Turn Off the Alarm' },
   startAgain: { zh: '再來一次', en: 'Start Again' },
   addMyStars: { zh: '⭐ 把我的 {count} 顆星星放進去！', en: '⭐ Add my {count} stars!' },
 

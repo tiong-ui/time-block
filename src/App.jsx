@@ -26,7 +26,13 @@ import StarJarScreen from './StarJarScreen.jsx'
 import EditAvatarScreen from './EditAvatarScreen.jsx'
 import JarDropAnimation from './JarDropAnimation.jsx'
 import PieTimer from './PieTimer'
-import { playIntervalCue, scheduleChime, scheduleIntervalCues } from './chime'
+import {
+  playIntervalCue,
+  scheduleAlarm,
+  stopAlarm,
+  isAlarmScheduled,
+  scheduleIntervalCues,
+} from './chime'
 import { saveSession, clearSession, loadSession, restoredTimerState } from './session.js'
 import './App.css'
 
@@ -94,6 +100,9 @@ export default function App() {
   const familyCodeRef = useRef(familyCode)
   const activeKidRef = useRef(null)
   const [starsResult, setStarsResult] = useState(null)
+  // The finishing alarm keeps sounding after the countdown ends, so the
+  // done screen needs to know whether there's still something to hush.
+  const [alarmRinging, setAlarmRinging] = useState(false)
 
   useEffect(() => {
     familyCodeRef.current = familyCode
@@ -225,41 +234,52 @@ export default function App() {
   const endAtRef = useRef(restoredSession?.endAt ?? 0)
   const pausedAtRef = useRef(restoredSession?.pausedAt ?? 0)
   const rafRef = useRef(null)
-  const cancelAudioRef = useRef(null)
+  const cancelCuesRef = useRef(null)
   // Set when a session that finished while the app was closed still
   // owes its stars, which can only be paid once the kid data loads.
   const owedStarsRef = useRef(opening.owesStars)
 
-  function cancelScheduledAudio() {
-    if (cancelAudioRef.current) {
-      cancelAudioRef.current()
-      cancelAudioRef.current = null
+  function cancelScheduledCues() {
+    if (cancelCuesRef.current) {
+      cancelCuesRef.current()
+      cancelCuesRef.current = null
     }
   }
 
-  // Books the finishing melody — and, for HIIT, every work/rest switch —
+  // Everything the session had booked, silenced — including the alarm,
+  // whether it's still counting down to the end or already ringing.
+  function clearScheduledAudio() {
+    cancelScheduledCues()
+    stopAlarm()
+  }
+
+  // The same, plus letting the done screen know there's nothing left to
+  // hush. This is what the kid's "turn it off" button reaches.
+  function silenceSession() {
+    clearScheduledAudio()
+    setAlarmRinging(false)
+  }
+
+  // Books the finishing alarm — and, for HIIT, every work/rest switch —
   // on the Web Audio clock up front. That clock keeps running while the
   // tab is hidden, so the timer is still heard with the screen off,
   // rather than everything firing at once when you come back.
   function scheduleAudioFrom(now) {
-    cancelScheduledAudio()
+    clearScheduledAudio()
     const sessionRemainingMs = endAtRef.current - now
     if (sessionRemainingMs <= 0) return
 
-    const cancels = [scheduleChime(sessionRemainingMs)]
+    scheduleAlarm(sessionRemainingMs, { onGiveUp: () => setAlarmRinging(false) })
     if (isHiitRef.current) {
-      cancels.push(
-        scheduleIntervalCues(
-          upcomingCues({
-            elapsedMs: now - startedAtRef.current,
-            exerciseSec: exerciseSecRef.current,
-            restSec: restSecRef.current,
-            sessionRemainingMs,
-          }),
-        ),
+      cancelCuesRef.current = scheduleIntervalCues(
+        upcomingCues({
+          elapsedMs: now - startedAtRef.current,
+          exerciseSec: exerciseSecRef.current,
+          restSec: restSecRef.current,
+          sessionRemainingMs,
+        }),
       )
     }
-    cancelAudioRef.current = () => cancels.forEach(cancel => cancel())
   }
 
   function persistSession(pausedAt = null) {
@@ -320,14 +340,14 @@ export default function App() {
       setPaused(false)
     } else {
       pausedAtRef.current = now
-      cancelScheduledAudio()
+      silenceSession()
       persistSession(now)
       setPaused(true)
     }
   }
 
   function stopTimer() {
-    cancelScheduledAudio()
+    silenceSession()
     clearSession()
     setPhase('select')
     setPaused(false)
@@ -345,7 +365,11 @@ export default function App() {
 
   function finishSession() {
     clearSession()
-    cancelScheduledAudio()
+    // Only the interval cues stop here. The alarm is meant to outlive
+    // the countdown and keep ringing until the kid turns it off, which
+    // is the whole point of it being an alarm.
+    cancelScheduledCues()
+    setAlarmRinging(isAlarmScheduled())
     setPhase('done')
     if (activeKidRef.current) {
       awardStars()
@@ -389,8 +413,11 @@ export default function App() {
       }
 
       if (msLeft <= 0) {
-        // The finishing melody was booked on the audio clock when the
-        // session began, so there's nothing to play here.
+        // The alarm was booked on the audio clock when the session
+        // began, so there's nothing to start here — and, importantly,
+        // nothing to cancel either: cancelling everything at this point
+        // used to silence the melody a frame after it began, leaving a
+        // blip where the celebration should have been.
         finishSession()
         return
       }
@@ -412,7 +439,7 @@ export default function App() {
     if (audioRestoredRef.current) return
     if (phase !== 'running' || paused) return
     audioRestoredRef.current = true
-    if (!cancelAudioRef.current) scheduleAudioFrom(Date.now())
+    if (!isAlarmScheduled()) scheduleAudioFrom(Date.now())
     // scheduleAudioFrom is redefined each render but reads only refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, paused])
@@ -496,7 +523,13 @@ export default function App() {
       )}
 
       {phase === 'done' && (
-        <DoneScreen activity={activity} starsResult={starsResult} onRestart={stopTimer} />
+        <DoneScreen
+          activity={activity}
+          starsResult={starsResult}
+          alarmRinging={alarmRinging}
+          onSilenceAlarm={silenceSession}
+          onRestart={stopTimer}
+        />
       )}
     </div>
   )
@@ -731,19 +764,25 @@ function RunningScreen({
   )
 }
 
-function DoneScreen({ activity, starsResult, onRestart }) {
+function DoneScreen({ activity, starsResult, alarmRinging, onSilenceAlarm, onRestart }) {
   return (
     <div className="screen done-screen">
-      <div className="hero-icon" aria-hidden="true">🎉</div>
+      <div className={`hero-icon${alarmRinging ? ' hero-ringing' : ''}`} aria-hidden="true">🎉</div>
       <h1><T k="greatJob" /></h1>
       <p className="subtitle">
         {activity ? <T k="niceWorkOn" vars={{ activity: activity.label }} /> : <T k="timeIsUp" />}
       </p>
+      {alarmRinging && (
+        <button className="preset-btn wide-btn silence-btn" onClick={onSilenceAlarm}>
+          <T k="turnOffAlarm" />
+        </button>
+      )}
       {starsResult && (
         <JarDropAnimation
           before={starsResult.before}
           after={starsResult.after}
           starsAdded={starsResult.starsAdded}
+          onCollect={onSilenceAlarm}
         />
       )}
       <button className="preset-btn wide-btn" onClick={onRestart}>

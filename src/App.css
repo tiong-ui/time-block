@@ -121,6 +121,10 @@ html {
   --hiit-work-track: #ffe0d4;
   --hiit-rest: #0d9aba;
   --hiit-rest-track: #d3f0f7;
+  /* The alarm keeps its own warm colour in every theme: "this is
+     ringing, turn it off" shouldn't change hue with the decor. */
+  --alarm: #ef6c00;
+  --alarm-ink: #fff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -129,6 +133,10 @@ html {
     --hiit-work-track: #45241a;
     --hiit-rest: #4dd0e1;
     --hiit-rest-track: #12363e;
+    --alarm: #ffa726;
+    /* The dark-mode amber is bright enough that white text on it is
+       hard to read; dark ink keeps the label legible on both. */
+    --alarm-ink: #2b1a05;
   }
 }
 
@@ -760,6 +768,42 @@ h1 .t-en {
 
 @media (prefers-reduced-motion: reduce) {
   .collect-btn {
+    animation: none;
+  }
+}
+
+/* The alarm is still sounding, so hushing it is the one thing on this
+   screen that matters — it sits above the stars and pulses harder than
+   the collect button below it. Glow only, never a transform: the
+   button must not move out from under a small finger reaching for it. */
+@keyframes alarmPulse {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 26px 4px var(--alarm); }
+}
+
+.silence-btn,
+.silence-btn:hover {
+  background: var(--alarm);
+  border-color: var(--alarm);
+  color: var(--alarm-ink);
+}
+
+.silence-btn {
+  animation: alarmPulse 1s ease-in-out infinite;
+}
+
+@keyframes heroRing {
+  0%, 100% { transform: rotate(-9deg); }
+  50% { transform: rotate(9deg); }
+}
+
+.hero-ringing {
+  animation: heroRing 0.45s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .silence-btn,
+  .hero-ringing {
     animation: none;
   }
 }

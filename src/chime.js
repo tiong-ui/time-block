@@ -127,6 +127,9 @@ function waveTypeFor(freq) {
 
 export const TUNE_COUNT = TUNES.length
 
+const MELODY_PEAK = 0.5
+const MELODY_CHORD_PEAK = 0.34
+
 // Anything scheduled ahead of time hands back a canceller, so a pause
 // or an early stop can silence what hasn't sounded yet.
 function cancelHandle(nodes) {
@@ -147,7 +150,10 @@ function scheduleTune(audioCtx, tune, startAt) {
   const nodes = []
   tune.forEach(({ time, duration, freqs }) => {
     const start = startAt + time
-    const peakGain = freqs.length > 1 ? 0.15 : 0.22
+    // Loud enough to be an alarm, not background music. Chords are
+    // pulled down because their notes sum; the compressor catches the
+    // rest so the peaks stay clean.
+    const peakGain = freqs.length > 1 ? MELODY_CHORD_PEAK : MELODY_PEAK
 
     freqs.forEach(freq => {
       const osc = audioCtx.createOscillator()
@@ -165,7 +171,7 @@ function scheduleTune(audioCtx, tune, startAt) {
 
       osc.start(start)
       osc.stop(start + duration)
-      nodes.push({ osc, gain })
+      nodes.push({ osc, gain, endsAt: start + duration })
     })
   })
   return nodes
@@ -185,15 +191,115 @@ export function playChime(tuneIndex) {
   scheduleTune(audioCtx, pickTune(tuneIndex), audioCtx.currentTime)
 }
 
-// Schedules the finishing melody `delayMs` from now on the Web Audio
-// clock, which keeps running while the tab is hidden — so the timer is
-// still heard when the phone is face-down or in a pocket.
-export function scheduleChime(delayMs) {
+// ---------------------------------------------------------------
+// The finishing alarm
+//
+// When the session ends the melody doesn't just play once and stop —
+// it repeats like a phone alarm until the kid turns it off, so a timer
+// that runs out while they've wandered off still gets noticed.
+//
+// It's booked on the Web Audio clock rather than fired from a timer,
+// because that clock keeps running while the tab is hidden — the alarm
+// still sounds with the phone face-down or the screen off. Since an
+// endless loop can't all be booked up front, repeats are scheduled a
+// long way ahead and topped up periodically. The lookahead is far
+// wider than the top-up interval on purpose: browsers throttle timers
+// in hidden tabs to about once a minute, so the booked repeats have to
+// cover that gap on their own.
+
+const ALARM_GAP_SEC = 0.9
+const ALARM_LOOKAHEAD_SEC = 150
+const ALARM_REFILL_MS = 20000
+// Booked the moment the session starts, however far off the end is, so
+// the alarm still rings even if the tab is frozen for the whole session
+// and no top-up ever gets to run. A minute of it is enough to notice.
+const ALARM_MIN_BOOKED_SEC = 60
+// Gives up eventually, so a session finishing in an abandoned tab
+// doesn't ring into the evening.
+const ALARM_MAX_SEC = 5 * 60
+
+let alarm = null
+
+function tuneDurationSec(tune) {
+  return tune.reduce((end, chord) => Math.max(end, chord.time + chord.duration), 0)
+}
+
+// Which repeats fall inside the window we're booking, and where the
+// next one after them starts. Pure, so the awkward part — topping up
+// without double-booking or overrunning the cut-off — is testable.
+export function alarmRepeats({ nextAt, cycleSec, horizonSec, stopsAtSec }) {
+  const starts = []
+  if (!(cycleSec > 0)) return { starts, nextAt }
+  let at = nextAt
+  while (at < horizonSec && at < stopsAtSec) {
+    starts.push(at)
+    at += cycleSec
+  }
+  return { starts, nextAt: at }
+}
+
+function fillAlarmTo(horizonSec) {
+  const { starts, nextAt } = alarmRepeats({
+    nextAt: alarm.nextAt,
+    cycleSec: alarm.cycleSec,
+    horizonSec,
+    stopsAtSec: alarm.stopsAt,
+  })
+  starts.forEach(at => alarm.nodes.push(...scheduleTune(ctx, alarm.tune, at)))
+  alarm.nextAt = nextAt
+  // Repeats that have already sounded are done with; keeping them would
+  // grow the list for as long as the alarm rings.
+  alarm.nodes = alarm.nodes.filter(node => node.endsAt > ctx.currentTime)
+}
+
+function refillAlarm() {
+  if (!alarm) return
+  if (ctx.currentTime >= alarm.stopsAt) {
+    const { onGiveUp } = alarm
+    stopAlarm()
+    if (onGiveUp) onGiveUp()
+    return
+  }
+  fillAlarmTo(ctx.currentTime + ALARM_LOOKAHEAD_SEC)
+}
+
+// Books the alarm to start `delayMs` from now and repeat until stopped.
+// `onGiveUp` fires only if it reaches its own cut-off — stopping it by
+// hand is the caller's own doing and needs no callback. Returns false
+// when there's no audio available at all.
+export function scheduleAlarm(delayMs, { onGiveUp } = {}) {
   const audioCtx = getContext()
-  if (!audioCtx) return () => {}
+  if (!audioCtx) return false
   if (audioCtx.state === 'suspended') audioCtx.resume()
-  const nodes = scheduleTune(audioCtx, pickTune(), audioCtx.currentTime + Math.max(0, delayMs) / 1000)
-  return cancelHandle(nodes)
+  stopAlarm()
+
+  const tune = pickTune()
+  const startAt = audioCtx.currentTime + Math.max(0, delayMs) / 1000
+  alarm = {
+    tune,
+    cycleSec: tuneDurationSec(tune) + ALARM_GAP_SEC,
+    nextAt: startAt,
+    stopsAt: startAt + ALARM_MAX_SEC,
+    nodes: [],
+    refill: null,
+    onGiveUp,
+  }
+  fillAlarmTo(startAt + ALARM_MIN_BOOKED_SEC)
+  alarm.refill = setInterval(refillAlarm, ALARM_REFILL_MS)
+  return true
+}
+
+export function stopAlarm() {
+  if (!alarm) return
+  clearInterval(alarm.refill)
+  cancelHandle(alarm.nodes)()
+  alarm = null
+}
+
+// Whether an alarm is currently booked — either counting down to the
+// end of a session or ringing right now.
+export function isAlarmScheduled() {
+  return alarm !== null
 }
 
 // Interval cues for HIIT: a rising double beep to start working, a
