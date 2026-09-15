@@ -106,6 +106,9 @@ export default function App() {
   // The finishing alarm keeps sounding after the countdown ends, so the
   // done screen needs to know whether there's still something to hush.
   const [alarmRinging, setAlarmRinging] = useState(false)
+  // Saving a kid's stars can fail (no network, rules) long after the
+  // countdown ends, so the done screen has to be able to say so.
+  const [starsError, setStarsError] = useState(null)
 
   useEffect(() => {
     familyCodeRef.current = familyCode
@@ -368,13 +371,23 @@ export default function App() {
     // screen shows — the lifetime total keeps its own count.
     const before = starBalance(activeKidRef.current).balance
     setStarsResult({ before, after: before + STARS_PER_SESSION, starsAdded: STARS_PER_SESSION })
+    setStarsError(null)
     if (activeKidIdRef.current && familyCodeRef.current) {
       addStars(familyCodeRef.current, activeKidIdRef.current, STARS_PER_SESSION, {
         activityId: activityIdRef.current,
         minutes: Math.round(totalMsRef.current / 60000),
-      }).catch(err => {
-        console.error('Failed to save stars:', err)
       })
+        .then(result => {
+          // The stars landed but the log entry didn't — worth saying,
+          // quietly, rather than leaving the log silently incomplete.
+          if (!result.logged) setStarsError(tBoth('errLogEntry', { detail: errorDetail(result.logError) }))
+        })
+        .catch(err => {
+          // Animating stars into the jar while the write failed tells
+          // the kid they earned something they didn't.
+          console.error('Failed to save stars:', err)
+          setStarsError(tBoth('errSaveStars', { detail: errorDetail(err) }))
+        })
     }
   }
 
@@ -572,6 +585,7 @@ export default function App() {
           activity={activity}
           starsResult={starsResult}
           alarmRinging={alarmRinging}
+          starsError={starsError}
           onSilenceAlarm={silenceSession}
           onRestart={stopTimer}
         />
@@ -809,7 +823,7 @@ function RunningScreen({
   )
 }
 
-function DoneScreen({ activity, starsResult, alarmRinging, onSilenceAlarm, onRestart }) {
+function DoneScreen({ activity, starsResult, starsError, alarmRinging, onSilenceAlarm, onRestart }) {
   return (
     <div className="screen done-screen">
       <div className={`hero-icon${alarmRinging ? ' hero-ringing' : ''}`} aria-hidden="true">🎉</div>
@@ -830,6 +844,7 @@ function DoneScreen({ activity, starsResult, alarmRinging, onSilenceAlarm, onRes
           onCollect={onSilenceAlarm}
         />
       )}
+      {starsError && <p className="form-error">{starsError}</p>}
       <button className="preset-btn wide-btn" onClick={onRestart}>
         <T k="startAgain" />
       </button>

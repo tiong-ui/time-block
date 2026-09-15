@@ -151,6 +151,8 @@ export const STRINGS = {
   errCheckCode: { zh: '目前無法確認代碼。{detail}請檢查網路後再試一次。', en: "Couldn't check that code right now.{detail} Check your connection and try again." },
   errCodeNotFound: { zh: '找不到這個代碼，請再確認一次。', en: "We couldn't find that code. Double-check it and try again." },
   errAddKid: { zh: '目前無法新增。{detail}請檢查網路後再試一次。', en: "Couldn't add that right now.{detail} Check your connection and try again." },
+  errSaveStars: { zh: '星星沒存起來{detail}，請檢查網路。下次連上線再完成一次就會補上。', en: "Those stars didn't save{detail}. Check your connection — finish another session once you're online." },
+  errLogEntry: { zh: '星星有記到，但紀錄沒寫進去{detail}。請確認 Firestore 規則有涵蓋 ledger。', en: "The stars counted, but the log entry didn't save{detail}. Check that your Firestore rules cover the ledger." },
   errLoadLog: { zh: '讀不到星星紀錄{detail}，請檢查網路。', en: "Couldn't load the star log{detail}. Check your connection." },
   errLoadRewards: { zh: '讀不到獎勵清單{detail}，請檢查網路。', en: "Couldn't load the rewards{detail}. Check your connection." },
   errRedeem: { zh: '兌換沒有成功{detail}，請再試一次。', en: "That trade didn't go through{detail}. Please try again." },
