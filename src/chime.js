@@ -102,6 +102,70 @@ const TUNES = [
     { time: 2.45, duration: 1.7, freqs: [C6, E6, G6] },
     { time: 2.45, duration: 1.7, freqs: [C4] },
   ],
+  // Tunes everyone knows. These are all long out of copyright — the
+  // newest was published in 1824 — and they're synthesised here rather
+  // than sampled, so there's no recording to licence either. A modern
+  // pop song, however well it fits, can't be shipped inside a public
+  // web app; these carry the same "you did it" feeling and cost
+  // nothing but a few lines of notes.
+
+  // Ode to Joy — Beethoven, 1824
+  [
+    { time: 0.0, duration: 0.3, freqs: [E5] },
+    { time: 0.3, duration: 0.3, freqs: [E5] },
+    { time: 0.6, duration: 0.3, freqs: [F5] },
+    { time: 0.9, duration: 0.3, freqs: [G5] },
+    { time: 1.2, duration: 0.3, freqs: [G5] },
+    { time: 1.5, duration: 0.3, freqs: [F5] },
+    { time: 1.8, duration: 0.3, freqs: [E5] },
+    { time: 2.1, duration: 0.3, freqs: [D5] },
+    { time: 2.4, duration: 0.3, freqs: [C5] },
+    { time: 2.7, duration: 0.3, freqs: [C5] },
+    { time: 3.0, duration: 0.3, freqs: [D5] },
+    { time: 3.3, duration: 0.3, freqs: [E5] },
+    { time: 3.6, duration: 0.45, freqs: [E5] },
+    { time: 4.05, duration: 0.15, freqs: [D5] },
+    { time: 4.2, duration: 1.5, freqs: [C5, E5, G5] },
+    { time: 4.2, duration: 1.5, freqs: [C4] },
+  ],
+  // For He's a Jolly Good Fellow — traditional, 18th century. The one
+  // song that is literally about someone having done well.
+  [
+    { time: 0.0, duration: 0.25, freqs: [C5] },
+    { time: 0.25, duration: 0.25, freqs: [C5] },
+    { time: 0.5, duration: 0.25, freqs: [D5] },
+    { time: 0.75, duration: 0.25, freqs: [C5] },
+    { time: 1.0, duration: 0.25, freqs: [F5] },
+    { time: 1.25, duration: 0.6, freqs: [E5] },
+    { time: 1.9, duration: 0.25, freqs: [C5] },
+    { time: 2.15, duration: 0.25, freqs: [C5] },
+    { time: 2.4, duration: 0.25, freqs: [D5] },
+    { time: 2.65, duration: 0.25, freqs: [C5] },
+    { time: 2.9, duration: 0.25, freqs: [G5] },
+    { time: 3.15, duration: 0.6, freqs: [F5] },
+    { time: 3.8, duration: 0.25, freqs: [F5] },
+    { time: 4.05, duration: 0.25, freqs: [E5] },
+    { time: 4.3, duration: 0.25, freqs: [D5] },
+    { time: 4.55, duration: 1.5, freqs: [C5, E5, G5] },
+    { time: 4.55, duration: 1.5, freqs: [C4] },
+  ],
+  // When the Saints Go Marching In — traditional
+  [
+    { time: 0.0, duration: 0.28, freqs: [C5] },
+    { time: 0.28, duration: 0.28, freqs: [E5] },
+    { time: 0.56, duration: 0.28, freqs: [F5] },
+    { time: 0.84, duration: 0.84, freqs: [G5] },
+    { time: 1.75, duration: 0.28, freqs: [C5] },
+    { time: 2.03, duration: 0.28, freqs: [E5] },
+    { time: 2.31, duration: 0.28, freqs: [F5] },
+    { time: 2.59, duration: 0.56, freqs: [G5] },
+    { time: 3.15, duration: 0.56, freqs: [E5] },
+    { time: 3.71, duration: 0.56, freqs: [C5] },
+    { time: 4.27, duration: 0.28, freqs: [E5] },
+    { time: 4.55, duration: 0.56, freqs: [D5] },
+    { time: 5.11, duration: 1.5, freqs: [C5, E5, G5] },
+    { time: 5.11, duration: 1.5, freqs: [C4] },
+  ],
   // Gentle cheer: a slower, warmer build to the finish
   [
     { time: 0.0, duration: 0.4, freqs: [E5] },
