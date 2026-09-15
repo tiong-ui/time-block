@@ -12,3 +12,19 @@ export function T({ k, vars }) {
     </>
   )
 }
+
+// A label that may or may not be bilingual: the rewards shipped with
+// the app carry both languages, while one a family typed in is in
+// whichever language they typed it, and should be shown exactly as
+// written rather than stacked against a blank.
+export function Label({ value }) {
+  if (value && typeof value === 'object') {
+    return (
+      <>
+        <span className="t-zh" lang="zh-Hant">{value.zh}</span>
+        <span className="t-en" lang="en">{value.en}</span>
+      </>
+    )
+  }
+  return <span className="t-solo">{value}</span>
+}

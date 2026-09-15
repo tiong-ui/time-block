@@ -14,7 +14,7 @@ import {
   intervalAt,
   upcomingCues,
 } from './hiit.js'
-import { STARS_PER_SESSION } from './stars.js'
+import { STARS_PER_SESSION, starBalance } from './stars.js'
 import { errorDetail } from './errorMessage.js'
 import { T } from './T.jsx'
 import { tBoth } from './i18n.js'
@@ -23,6 +23,8 @@ import { watchKids, addKid, addStars, updateKidAvatar } from './kids.js'
 import FamilySetupScreen from './FamilySetupScreen.jsx'
 import KidPickerScreen from './KidPickerScreen.jsx'
 import StarJarScreen from './StarJarScreen.jsx'
+import StarLogScreen from './StarLogScreen.jsx'
+import RewardsScreen from './RewardsScreen.jsx'
 import EditAvatarScreen from './EditAvatarScreen.jsx'
 import JarDropAnimation from './JarDropAnimation.jsx'
 import PieTimer from './PieTimer'
@@ -222,11 +224,18 @@ export default function App() {
   const isHiitRef = useRef(isHiit)
   const exerciseSecRef = useRef(exerciseSec)
   const restSecRef = useRef(restSec)
+  // Awarding stars happens from the frame loop and from a restore, both
+  // of which run against a stale closure — so what the session was for,
+  // and how long it ran, are read through refs like the rest.
+  const activityIdRef = useRef(activityId)
+  const totalMsRef = useRef(totalMs)
   useEffect(() => {
     isHiitRef.current = isHiit
     exerciseSecRef.current = exerciseSec
     restSecRef.current = restSec
-  }, [isHiit, exerciseSec, restSec])
+    activityIdRef.current = activityId
+    totalMsRef.current = totalMs
+  }, [isHiit, exerciseSec, restSec, activityId, totalMs])
 
   // Wall-clock bookkeeping so the countdown stays accurate even if the
   // tab is backgrounded and rAF/timers get throttled.
@@ -354,10 +363,15 @@ export default function App() {
   }
 
   function awardStars() {
-    const before = activeKidRef.current?.totalStars ?? 0
+    // The jar animates the spendable balance, which is what the Star Jar
+    // screen shows — the lifetime total keeps its own count.
+    const before = starBalance(activeKidRef.current).balance
     setStarsResult({ before, after: before + STARS_PER_SESSION, starsAdded: STARS_PER_SESSION })
     if (activeKidIdRef.current && familyCodeRef.current) {
-      addStars(familyCodeRef.current, activeKidIdRef.current, STARS_PER_SESSION).catch(err => {
+      addStars(familyCodeRef.current, activeKidIdRef.current, STARS_PER_SESSION, {
+        activityId: activityIdRef.current,
+        minutes: Math.round(totalMsRef.current / 60000),
+      }).catch(err => {
         console.error('Failed to save stars:', err)
       })
     }
@@ -473,7 +487,28 @@ export default function App() {
   if (stage === 'starjar') {
     return (
       <div className="app">
-        <StarJarScreen kid={activeKid} onBack={() => setStage('timer')} />
+        <StarJarScreen
+          kid={activeKid}
+          onBack={() => setStage('timer')}
+          onViewLog={() => setStage('starlog')}
+          onViewRewards={() => setStage('rewards')}
+        />
+      </div>
+    )
+  }
+
+  if (stage === 'starlog') {
+    return (
+      <div className="app">
+        <StarLogScreen familyCode={familyCode} kid={activeKid} onBack={() => setStage('starjar')} />
+      </div>
+    )
+  }
+
+  if (stage === 'rewards') {
+    return (
+      <div className="app">
+        <RewardsScreen familyCode={familyCode} kid={activeKid} onBack={() => setStage('starjar')} />
       </div>
     )
   }

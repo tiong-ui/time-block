@@ -1,0 +1,24 @@
+// Firestore security rules for the Star Jar sync, kept here so the
+// shape the app needs is written down next to the code that needs it.
+// They are NOT applied automatically — paste them into the Firebase
+// console (Firestore Database → Rules → Publish) when they change.
+//
+// The security model is the family code itself: anyone who knows a
+// code can read and write that family's data, which is the same trade
+// the app makes everywhere else. Star counts aren't sensitive, and
+// this avoids real accounts and passwords for a kids' app. Signing in
+// (anonymously, silently) is still required, so a request with no auth
+// at all gets nothing.
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Everything a family owns: the family document itself, its kids,
+    // each kid's star ledger, and the family's reward list. The
+    // recursive wildcard means new subcollections don't need a rules
+    // change to start working.
+    match /families/{familyCode}/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
