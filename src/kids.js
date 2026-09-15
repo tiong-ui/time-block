@@ -7,9 +7,13 @@ import {
   onSnapshot,
   updateDoc,
   increment,
+  runTransaction,
   serverTimestamp,
+  writeBatch,
 } from 'firebase/firestore'
 import { db, authReady } from './firebase.js'
+import { starBalance } from './stars.js'
+import { earnedEntry, spentEntry, newLedgerEntry } from './ledger.js'
 
 function kidsCollection(familyCode) {
   return collection(db, 'families', familyCode, 'kids')
@@ -25,7 +29,7 @@ export function watchKids(familyCode, onChange, onError) {
       unsubscribe = onSnapshot(
         kidsCollection(familyCode),
         snap => {
-          const kids = snap.docs.map(d => ({ id: d.id, totalStars: 0, ...d.data() }))
+          const kids = snap.docs.map(d => ({ id: d.id, totalStars: 0, starsSpent: 0, ...d.data() }))
           onChange(kids)
         },
         onError,
@@ -41,15 +45,45 @@ export async function addKid(familyCode, { name, avatar }) {
     name,
     avatar,
     totalStars: 0,
+    starsSpent: 0,
     createdAt: serverTimestamp(),
   })
   return ref.id
 }
 
-export async function addStars(familyCode, kidId, amount) {
+// The running total and the log entry go up together, so the log can
+// never disagree with the total a kid is looking at.
+export async function addStars(familyCode, kidId, amount, { activityId, minutes } = {}) {
   await authReady
-  const ref = doc(db, 'families', familyCode, 'kids', kidId)
-  await updateDoc(ref, { totalStars: increment(amount) })
+  const batch = writeBatch(db)
+  batch.update(doc(db, 'families', familyCode, 'kids', kidId), { totalStars: increment(amount) })
+  batch.set(newLedgerEntry(familyCode, kidId), earnedEntry({ stars: amount, activityId, minutes }))
+  await batch.commit()
+}
+
+// Spending has to check the balance and deduct it as one indivisible
+// step: two phones redeeming at the same moment must not both succeed
+// against the same stars. A transaction re-reads and retries if the
+// count moved underneath it.
+export class NotEnoughStarsError extends Error {
+  constructor(balance) {
+    super('not-enough-stars')
+    this.name = 'NotEnoughStarsError'
+    this.balance = balance
+  }
+}
+
+export async function redeemReward(familyCode, kidId, { cost, label, emoji }) {
+  await authReady
+  const kidRef = doc(db, 'families', familyCode, 'kids', kidId)
+  await runTransaction(db, async tx => {
+    const snap = await tx.get(kidRef)
+    if (!snap.exists()) throw new Error('This kid no longer exists.')
+    const { balance } = starBalance(snap.data())
+    if (balance < cost) throw new NotEnoughStarsError(balance)
+    tx.update(kidRef, { starsSpent: increment(cost) })
+    tx.set(newLedgerEntry(familyCode, kidId), spentEntry({ stars: cost, rewardLabel: label, rewardEmoji: emoji }))
+  })
 }
 
 export async function updateKidAvatar(familyCode, kidId, avatar) {

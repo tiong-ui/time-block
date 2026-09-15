@@ -831,3 +831,285 @@ h1 .t-en {
     font-size: 1.9rem;
   }
 }
+
+/* ── Shared text input ── */
+.text-input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 2px solid var(--accent-soft);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Placeholders carry both languages, so they need more room than the
+   value they stand in for. */
+.text-input::placeholder {
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.text-input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* A label a family typed in themselves is in one language only, so it
+   shouldn't be squeezed into the smaller type of a stacked pair. */
+.t-solo {
+  display: block;
+}
+
+/* ── Star Jar page ── */
+/* Three tiles instead of two: the numbers stay the headline and the
+   labels shrink and wrap rather than forcing the row to overflow. */
+.jar-stats-row .jar-stat-label {
+  font-size: 0.68rem;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.jar-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+/* ── Star log ── */
+.log-screen {
+  align-items: stretch;
+}
+
+.log-screen > .hero-icon,
+.log-screen > h1,
+.log-screen > .subtitle,
+.log-screen > .text-btn {
+  align-self: center;
+}
+
+.log-day {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.log-day-heading {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-align: left;
+  margin-bottom: 8px;
+}
+
+.log-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.log-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  text-align: left;
+}
+
+.log-emoji {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.log-what {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.log-when {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.log-amount {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--accent-soft-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Stars leaving reads differently from stars arriving, at a glance. */
+.log-row-spent {
+  background: var(--card-bg);
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
+}
+
+.log-row-spent .log-amount {
+  color: var(--text-muted);
+}
+
+/* ── Rewards ── */
+.rewards-screen {
+  align-items: stretch;
+}
+
+.rewards-screen > .hero-icon,
+.rewards-screen > h1,
+.rewards-screen > .subtitle,
+.rewards-screen > .text-btn,
+.rewards-screen > .form-error {
+  align-self: center;
+}
+
+.reward-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.reward-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--card-bg);
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
+  text-align: left;
+}
+
+.reward-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reward-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-left: 40px;
+}
+
+/* Within reach right now — worth making obvious from across the room. */
+.reward-affordable {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.reward-emoji {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.reward-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.reward-cost {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.reward-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reward-redeem {
+  flex-direction: column;
+  gap: 0;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+}
+
+.reward-redeem:disabled {
+  opacity: 0.4;
+}
+
+.reward-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.reward-remove:hover {
+  color: #e05555;
+}
+
+/* ── Confirm / add forms ── */
+.confirm-card,
+.add-reward-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 18px;
+  background: var(--accent-soft);
+  margin-top: 8px;
+}
+
+.confirm-title {
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.confirm-reward {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent-soft-ink);
+}
+
+.confirm-body,
+.confirm-grownup {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.confirm-grownup {
+  font-weight: 700;
+}
+
+.confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.confirm-actions .wide-btn {
+  margin-top: 0;
+}
+
+/* Earned against spent, as two numbers rather than a sentence with
+   numbers spliced through it. */
+.log-totals {
+  margin-bottom: 4px;
+}
