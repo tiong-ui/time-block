@@ -10,7 +10,7 @@ import { T } from './T.jsx'
 // picture — trade 100 stars for a trip to the park and the jar should
 // visibly empty. "Jars filled" counts from stars ever earned instead,
 // so it's a trophy shelf that spending can never take away.
-export default function StarJarScreen({ kid, onBack, onViewLog, onViewRewards }) {
+export default function StarJarScreen({ kid, onBack, onViewLog, onViewRewards, onGrownUp }) {
   const { earned, balance } = starBalance(kid)
   const { fullJars } = jarStats(earned)
   const { currentJarStars } = jarStats(balance)
@@ -50,6 +50,9 @@ export default function StarJarScreen({ kid, onBack, onViewLog, onViewRewards })
         </button>
         <button className="preset-btn wide-btn" onClick={onViewLog}>
           📜 <T k="starLog" />
+        </button>
+        <button className="text-btn bi-inline" onClick={onGrownUp}>
+          🔑 <T k="grownUp" />
         </button>
       </div>
       <button className="text-btn" onClick={onBack}>

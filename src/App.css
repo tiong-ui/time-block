@@ -1113,3 +1113,70 @@ h1 .t-en {
 .log-totals {
   margin-bottom: 4px;
 }
+
+/* ── Grown-up area ── */
+.grownup-screen {
+  align-items: stretch;
+}
+
+.grownup-screen > .hero-icon,
+.grownup-screen > h1,
+.grownup-screen > .subtitle,
+.grownup-screen > .text-btn,
+.grownup-screen > .form-error {
+  align-self: center;
+}
+
+.pin-form,
+.award-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 18px;
+  background: var(--accent-soft);
+  margin-bottom: 14px;
+}
+
+/* Digits spaced out, so a four-digit code reads as four digits. */
+.pin-input {
+  letter-spacing: 0.5em;
+  text-indent: 0.5em;
+  font-size: 1.3rem;
+}
+
+.pin-input::placeholder {
+  letter-spacing: normal;
+  text-indent: 0;
+}
+
+.pin-hint {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.amount-row {
+  display: flex;
+  gap: 8px;
+}
+
+/* These sit on an accent-soft card, which is also the default button
+   background — without their own surface the unpicked ones stop
+   looking like buttons at all. */
+.amount-btn {
+  flex: 1;
+  padding: 12px 8px;
+  font-size: 1rem;
+  background: var(--card-bg);
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
+}
+
+.amount-active,
+.amount-active:hover {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}

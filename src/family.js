@@ -3,8 +3,9 @@
 // anyone with the code could join — but a star count isn't sensitive
 // data, and this avoids building real accounts/passwords for a kids'
 // app.
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore'
 import { db, authReady } from './firebase.js'
+import { randomSalt, hashPin } from './pin.js'
 
 export const FAMILY_STORAGE_KEY = 'focus-timer-family-code'
 
@@ -58,4 +59,33 @@ export async function familyExists(code) {
   await authReady
   const snap = await getDoc(doc(db, 'families', normalizeCode(code)))
   return snap.exists()
+}
+
+// ── Grown-up PIN ─────────────────────────────────────────────────────
+// Stored on the family document, salted and hashed. See pin.js for what
+// this does and does not protect.
+
+export function watchFamily(familyCode, onChange, onError) {
+  let unsubscribe = () => {}
+  authReady
+    .then(() => {
+      unsubscribe = onSnapshot(
+        doc(db, 'families', familyCode),
+        snap => onChange(snap.exists() ? snap.data() : null),
+        onError,
+      )
+    })
+    .catch(onError)
+  return () => unsubscribe()
+}
+
+export async function setFamilyPin(familyCode, pin) {
+  await authReady
+  const pinSalt = randomSalt()
+  const pinHash = await hashPin(pin, pinSalt)
+  await setDoc(doc(db, 'families', familyCode), { pinSalt, pinHash }, { merge: true })
+}
+
+export function familyHasPin(family) {
+  return Boolean(family?.pinHash && family?.pinSalt)
 }
