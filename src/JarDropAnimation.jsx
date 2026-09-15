@@ -14,7 +14,7 @@ const CELEBRATE_MS = 1600
 //
 // The stars are banked the moment the timer ends, so this is purely
 // the celebration — skipping it costs nothing.
-export default function JarDropAnimation({ before, after, starsAdded }) {
+export default function JarDropAnimation({ before, after, starsAdded, onCollect }) {
   const beforeInJar = before % JAR_CAPACITY
   const afterInJar = after % JAR_CAPACITY
   const jarCompleted = Math.floor(after / JAR_CAPACITY) > Math.floor(before / JAR_CAPACITY)
@@ -25,6 +25,9 @@ export default function JarDropAnimation({ before, after, starsAdded }) {
   const [shakeSignal, setShakeSignal] = useState(0)
 
   function handleCollect() {
+    // Reaching for the stars means the alarm has already done its job,
+    // and it would otherwise ring straight through the celebration.
+    if (onCollect) onCollect()
     setJarCount(Math.min(beforeInJar + starsAdded, JAR_CAPACITY))
     setPhase('falling')
   }
