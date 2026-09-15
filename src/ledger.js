@@ -25,12 +25,17 @@ export function newLedgerEntry(familyCode, kidId) {
   return doc(ledgerCollection(familyCode, kidId))
 }
 
-export function earnedEntry({ stars, activityId, minutes }) {
+// `manual` marks stars a grown-up added by hand rather than ones a
+// finished session paid out — worth telling apart when reading the log
+// back, so "where did these 20 come from?" has an answer.
+export function earnedEntry({ stars, activityId, minutes, manual, note }) {
   return {
     kind: 'earned',
     stars,
     activityId: activityId ?? null,
     minutes: minutes ?? null,
+    manual: Boolean(manual),
+    note: note || null,
     at: serverTimestamp(),
   }
 }

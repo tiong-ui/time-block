@@ -53,11 +53,14 @@ export async function addKid(familyCode, { name, avatar }) {
 
 // The running total and the log entry go up together, so the log can
 // never disagree with the total a kid is looking at.
-export async function addStars(familyCode, kidId, amount, { activityId, minutes } = {}) {
+export async function addStars(familyCode, kidId, amount, { activityId, minutes, manual, note } = {}) {
   await authReady
   const batch = writeBatch(db)
   batch.update(doc(db, 'families', familyCode, 'kids', kidId), { totalStars: increment(amount) })
-  batch.set(newLedgerEntry(familyCode, kidId), earnedEntry({ stars: amount, activityId, minutes }))
+  batch.set(
+    newLedgerEntry(familyCode, kidId),
+    earnedEntry({ stars: amount, activityId, minutes, manual, note }),
+  )
   await batch.commit()
 }
 

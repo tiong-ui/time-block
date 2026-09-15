@@ -25,6 +25,7 @@ import KidPickerScreen from './KidPickerScreen.jsx'
 import StarJarScreen from './StarJarScreen.jsx'
 import StarLogScreen from './StarLogScreen.jsx'
 import RewardsScreen from './RewardsScreen.jsx'
+import GrownUpScreen from './GrownUpScreen.jsx'
 import EditAvatarScreen from './EditAvatarScreen.jsx'
 import JarDropAnimation from './JarDropAnimation.jsx'
 import PieTimer from './PieTimer'
@@ -492,6 +493,7 @@ export default function App() {
           onBack={() => setStage('timer')}
           onViewLog={() => setStage('starlog')}
           onViewRewards={() => setStage('rewards')}
+          onGrownUp={() => setStage('grownup')}
         />
       </div>
     )
@@ -501,6 +503,14 @@ export default function App() {
     return (
       <div className="app">
         <StarLogScreen familyCode={familyCode} kid={activeKid} onBack={() => setStage('starjar')} />
+      </div>
+    )
+  }
+
+  if (stage === 'grownup') {
+    return (
+      <div className="app">
+        <GrownUpScreen familyCode={familyCode} kid={activeKid} onBack={() => setStage('starjar')} />
       </div>
     )
   }

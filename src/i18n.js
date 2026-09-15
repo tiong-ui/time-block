@@ -81,6 +81,34 @@ export const STRINGS = {
   rewardCostNeeded: { zh: '星星數要是大於 0 的整數', en: 'Star cost must be a whole number above 0' },
   spendable: { zh: '可以用', en: 'To spend' },
 
+  // Grown-up area
+  grownUp: { zh: '大人專區', en: 'Grown-ups' },
+  grownUpTitle: { zh: '幫{name}加星星', en: 'Add stars for {name}' },
+  enterPin: { zh: '輸入大人密碼', en: 'Enter the grown-up PIN' },
+  setPinTitle: { zh: '設定大人密碼', en: 'Set a grown-up PIN' },
+  setPinWhy: { zh: '設一組 4 位數密碼，只有大人可以手動加星星。', en: 'Pick a 4-digit PIN so only a grown-up can add stars by hand.' },
+  pinPlaceholder: { zh: '4 位數密碼', en: '4-digit PIN' },
+  pinAgainPlaceholder: { zh: '再輸入一次', en: 'Type it again' },
+  savePin: { zh: '設定密碼', en: 'Save PIN' },
+  unlock: { zh: '解鎖', en: 'Unlock' },
+  pinWrong: { zh: '密碼不對，還可以試 {count} 次', en: 'Wrong PIN — {count} tries left' },
+  pinLocked: { zh: '試太多次了，請等 {count} 秒', en: 'Too many tries — wait {count}s' },
+  pinNeedsFourDigits: { zh: '密碼要是 4 個數字', en: 'The PIN must be 4 digits' },
+  pinMismatch: { zh: '兩次輸入不一樣', en: "Those two didn't match" },
+  pinForgot: { zh: '忘記密碼了？在 Firebase 主控台刪掉家庭資料裡的 pinHash 就能重設。', en: 'Forgotten it? Delete pinHash on the family document in the Firebase console to reset.' },
+  changePin: { zh: '換一組密碼', en: 'Change the PIN' },
+  pinSaved: { zh: '密碼設好了', en: 'PIN saved' },
+
+  // Manual stars
+  howManyStars: { zh: '要加幾顆星星？', en: 'How many stars?' },
+  awardNotePlaceholder: { zh: '為了什麼？', en: 'What for?' },
+  giveStars: { zh: '給 {count} 顆星星', en: 'Give {count} stars' },
+  starsGiven: { zh: '加好了！{name}現在有 {count} 顆可以用', en: 'Done! {name} now has {count} to spend' },
+  manualStar: { zh: '大人加的星星', en: 'Added by a grown-up' },
+  awardAmountInvalid: { zh: '要是 1 到 100 之間的整數', en: 'Must be a whole number from 1 to 100' },
+  errSavePin: { zh: '密碼存不起來{detail}，請再試一次。', en: "Couldn't save the PIN{detail}. Please try again." },
+  errGiveStars: { zh: '星星沒加成功{detail}，請再試一次。', en: "Couldn't add those stars{detail}. Please try again." },
+
   // Kids
   whosFocusing: { zh: '今天誰要專心？', en: "Who's focusing today?" },
   addAKid: { zh: '新增小孩', en: 'Add a kid' },

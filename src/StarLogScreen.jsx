@@ -71,14 +71,16 @@ function LogRow({ entry }) {
   return (
     <li className={`log-row${spent ? ' log-row-spent' : ''}`}>
       <span className="log-emoji" aria-hidden="true">
-        {spent ? (entry.rewardEmoji ?? '🎁') : (activity?.emoji ?? '🎯')}
+        {spent ? (entry.rewardEmoji ?? '🎁') : entry.manual ? '🙌' : (activity?.emoji ?? '🎯')}
       </span>
       <span className="log-what">
         {spent
           ? <Label value={entry.rewardLabel} />
-          : activity
-            ? <Label value={activity.label} />
-            : <T k="justFocus" />}
+          : entry.manual
+            ? (entry.note ? <Label value={entry.note} /> : <T k="manualStar" />)
+            : activity
+              ? <Label value={activity.label} />
+              : <T k="justFocus" />}
         {/* Time and length as one short line. A stacked bilingual
             "20 minutes of focus" wrapped and doubled every row's height
             for a detail the emoji and the label already carry. */}
