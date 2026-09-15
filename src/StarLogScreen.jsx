@@ -4,10 +4,14 @@ import { watchLedger, groupByDay, ledgerTotals } from './ledger.js'
 import { errorDetail } from './errorMessage.js'
 import { tBoth } from './i18n.js'
 import { T, Label } from './T.jsx'
+import StarCalendar from './StarCalendar.jsx'
 
 // Where the stars came from and where they went. A running total says
 // how many; only this says when, and what the kid was doing at the time.
 export default function StarLogScreen({ familyCode, kid, onBack }) {
+  // Two readings of the same ledger: the list answers "what happened",
+  // the calendar answers "how have we been doing".
+  const [view, setView] = useState('list')
   const [entries, setEntries] = useState(null)
   const [error, setError] = useState(null)
 
@@ -16,20 +20,52 @@ export default function StarLogScreen({ familyCode, kid, onBack }) {
     return watchLedger(familyCode, kid.id, setEntries, err => setError(tBoth('errLoadLog', { detail: errorDetail(err) })))
   }, [familyCode, kid?.id])
 
-  return <StarLogView kid={kid} entries={entries} error={error} onBack={onBack} />
+  return (
+    <div className="screen log-screen">
+      <div className="hero-icon" aria-hidden="true">{kid.avatar}</div>
+      <h1><T k="starLogTitle" vars={{ name: kid.name }} /></h1>
+      <div className="view-switch">
+        <button
+          className={`preset-btn switch-btn${view === 'list' ? ' switch-active' : ''}`}
+          onClick={() => setView('list')}
+        >
+          <T k="viewList" />
+        </button>
+        <button
+          className={`preset-btn switch-btn${view === 'calendar' ? ' switch-active' : ''}`}
+          onClick={() => setView('calendar')}
+        >
+          <T k="viewCalendar" />
+        </button>
+      </div>
+      {view === 'list'
+        ? <StarLogBody entries={entries} error={error} />
+        : <StarCalendar familyCode={familyCode} kid={kid} />}
+      <button className="text-btn" onClick={onBack}><T k="back" /></button>
+    </div>
+  )
 }
 
 // Kept apart from the subscription above so the log can be rendered
 // from a fixed set of entries — the Firestore path isn't reachable from
 // a test environment, but this is.
 export function StarLogView({ kid, entries, error, onBack }) {
-  const days = useMemo(() => groupByDay(entries ?? []), [entries])
-  const totals = useMemo(() => ledgerTotals(entries ?? []), [entries])
-
   return (
     <div className="screen log-screen">
       <div className="hero-icon" aria-hidden="true">{kid.avatar}</div>
       <h1><T k="starLogTitle" vars={{ name: kid.name }} /></h1>
+      <StarLogBody entries={entries} error={error} />
+      <button className="text-btn" onClick={onBack}><T k="back" /></button>
+    </div>
+  )
+}
+
+function StarLogBody({ entries, error }) {
+  const days = useMemo(() => groupByDay(entries ?? []), [entries])
+  const totals = useMemo(() => ledgerTotals(entries ?? []), [entries])
+
+  return (
+    <>
       <div className="jar-stats-row log-totals">
         <div className="jar-stat-tile">
           <span className="jar-stat-number">+{totals.earned}</span>
@@ -58,8 +94,7 @@ export function StarLogView({ kid, entries, error, onBack }) {
         </section>
       ))}
 
-      <button className="text-btn" onClick={onBack}><T k="back" /></button>
-    </div>
+    </>
   )
 }
 
