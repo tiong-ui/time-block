@@ -5,11 +5,11 @@ import { errorDetail } from './errorMessage.js'
 import { T } from './T.jsx'
 import { tBoth, tZh } from './i18n.js'
 
-// Lets whoever's using the device pick their profile, or add a new one.
-// Shown on first use of a family, whenever kids switch, or when a
-// stored profile no longer exists.
-export default function KidPickerScreen({ kids, kidsLoaded, loadError, onSelectKid, onAddKid }) {
-  const [adding, setAdding] = useState(kidsLoaded && kids.length === 0)
+// Adding a kid to the family. `addOnly` skips the who's-here list —
+// the board already shows everyone, so getting here is always about
+// adding someone new.
+export default function KidPickerScreen({ kids, kidsLoaded, loadError, addOnly, onSelectKid, onAddKid, onBack }) {
+  const [adding, setAdding] = useState(addOnly || (kidsLoaded && kids.length === 0))
   const [name, setName] = useState('')
   const [avatar, setAvatar] = useState(AVATARS[0])
   const [busy, setBusy] = useState(false)
@@ -66,7 +66,11 @@ export default function KidPickerScreen({ kids, kidsLoaded, loadError, onSelectK
             <T k={busy ? 'adding' : 'add'} />
           </button>
           {kids.length > 0 && (
-            <button type="button" className="text-btn" onClick={() => setAdding(false)}>
+            <button
+              type="button"
+              className="text-btn"
+              onClick={() => (addOnly ? onBack() : setAdding(false))}
+            >
               <T k="back" />
             </button>
           )}

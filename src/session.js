@@ -1,7 +1,12 @@
-// Keeps a running timer alive across a reload. Only the facts needed to
-// rebuild it are stored, and the end time is absolute — so restoring is
-// just "how much wall-clock time is left", with no drift.
-const SESSION_STORAGE_KEY = 'focus-timer-running-session'
+// Keeps running timers alive across a reload. Only the facts needed to
+// rebuild one are stored, and the end time is absolute — so restoring
+// is just "how much wall-clock time is left", with no drift.
+//
+// Several kids can be counting down at once, so sessions are stored as
+// a map keyed by kid. The old single-session key is deliberately not
+// migrated: it recorded no kid, so there is no way to say whose it was,
+// and anything under it is an hour old at most anyway.
+const SESSIONS_STORAGE_KEY = 'focus-timer-running-sessions'
 
 // How long after a session should have finished we still count it. A
 // kid who locks the phone and comes back a few minutes later has earned
@@ -9,40 +14,44 @@ const SESSION_STORAGE_KEY = 'focus-timer-running-session'
 // met with a stale "Great job!".
 const STALE_AFTER_MS = 60 * 60 * 1000
 
-export function saveSession(session) {
+function readAll() {
   try {
-    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session))
+    const parsed = JSON.parse(localStorage.getItem(SESSIONS_STORAGE_KEY))
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function writeAll(sessions) {
+  try {
+    localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(sessions))
   } catch {
     // Storage can be unavailable (private browsing); a reload just
-    // loses the session, as it did before.
+    // loses the sessions, as it did before.
   }
 }
 
-export function clearSession() {
-  try {
-    localStorage.removeItem(SESSION_STORAGE_KEY)
-  } catch {
-    // Nothing to clean up.
-  }
+export function saveSession(kidId, session) {
+  if (!kidId) return
+  writeAll({ ...readAll(), [kidId]: session })
 }
 
-// Returns { status: 'running' | 'finished', session } or null.
-export function loadSession(now = Date.now()) {
-  let raw
-  try {
-    raw = localStorage.getItem(SESSION_STORAGE_KEY)
-  } catch {
-    return null
-  }
-  if (!raw) return null
+// One kid stopping or finishing must not disturb anyone else's saved
+// session, so this rewrites the map without their entry rather than
+// clearing the key.
+export function clearSession(kidId) {
+  if (!kidId) return
+  const sessions = readAll()
+  if (!(kidId in sessions)) return
+  delete sessions[kidId]
+  writeAll(sessions)
+}
 
-  let session
-  try {
-    session = JSON.parse(raw)
-  } catch {
-    return null
-  }
-
+// Returns { status: 'running' | 'finished', session } or null, for one
+// kid. Pure apart from the read, so what counts as still-running and
+// what counts as too stale is testable.
+export function sessionStatus(session, now = Date.now()) {
   const { endAt, totalMs, startedAt } = session ?? {}
   if (!Number.isFinite(endAt) || !Number.isFinite(totalMs) || !Number.isFinite(startedAt)) {
     return null
@@ -51,6 +60,22 @@ export function loadSession(now = Date.now()) {
   if (now < endAt) return { status: 'running', session }
   if (now - endAt <= STALE_AFTER_MS) return { status: 'finished', session }
   return null
+}
+
+export function loadSession(kidId, now = Date.now()) {
+  if (!kidId) return null
+  return sessionStatus(readAll()[kidId], now)
+}
+
+// Every kid with something to restore, so a board full of timers comes
+// back together rather than one at a time.
+export function loadSessions(now = Date.now()) {
+  const restored = {}
+  for (const [kidId, session] of Object.entries(readAll())) {
+    const found = sessionStatus(session, now)
+    if (found) restored[kidId] = found
+  }
+  return restored
 }
 
 // Turns whatever `loadSession` found into the timer's opening state.
