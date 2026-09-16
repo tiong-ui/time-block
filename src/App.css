@@ -1419,3 +1419,74 @@ h1 .t-en {
 .focus-running .card-body {
   gap: 10px;
 }
+
+/* ── A folded card ──
+   A kid who isn't focusing right now: one row, still theirs, one tap
+   from being open. Kept the same width as an open card so the grid
+   doesn't reflow as cards open and close. */
+.focus-collapsed {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  text-align: left;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+}
+
+.collapsed-avatar {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.collapsed-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.collapsed-stars {
+  font-weight: 800;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.collapsed-start {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.kid-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.collapse-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.collapse-btn:hover {
+  color: var(--text-primary);
+  background: var(--accent-soft);
+}
