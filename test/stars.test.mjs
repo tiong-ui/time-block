@@ -3,7 +3,7 @@
 // lives behind Firestore — so the maths is pure and checked here.
 import { starBalance, canAfford, jarStats, JAR_CAPACITY } from '../src/stars.js'
 import { groupByDay, ledgerTotals } from '../src/ledger.js'
-import { validateReward, labelToText, editedLabel } from '../src/rewards.js'
+import { validateReward, labelToText, editedLabel, emojiChoices, REWARD_EMOJI } from '../src/rewards.js'
 
 let pass = 0, fail = 0
 const eq = (a, e, n) => { const ok = JSON.stringify(a) === JSON.stringify(e); ok ? pass++ : fail++
@@ -68,5 +68,14 @@ eq(editedLabel(starter, '去公園玩'), starter, 'an untouched name keeps both 
 eq(editedLabel(starter, '  去公園玩  '), starter, 'and stray spaces are not a rename')
 eq(editedLabel(starter, '去動物園'), '去動物園', 'a real rename becomes what the parent typed')
 eq(editedLabel('看卡通', '看兩集卡通'), '看兩集卡通', 'renaming a typed reward just replaces it')
+
+// ── The picture on a reward ──────────────────────────────────────────
+eq(emojiChoices('🛝'), REWARD_EMOJI, 'a picture already on the list adds nothing to it')
+eq(emojiChoices('🦖')[0], '🦖', 'one that is not is offered first, so opening the form never drops it')
+eq(emojiChoices('🦖').length, REWARD_EMOJI.length + 1, 'and the rest of the list still follows')
+eq(emojiChoices(undefined), REWARD_EMOJI, 'a reward with no picture just gets the list')
+// Every starter must be representable, or editing one would show
+// nothing selected.
+eq(['📺', '🍜', '🛝', '🧸'].every(e => REWARD_EMOJI.includes(e)), true, 'every starter picture is on the list')
 
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)

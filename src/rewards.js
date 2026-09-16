@@ -27,6 +27,25 @@ export const DEFAULT_REWARDS = [
   { id: 'starter-toy', emoji: '🧸', cost: 200, label: { zh: '一個新玩具', en: 'A new toy' } },
 ]
 
+// What a reward can look like. Broad enough to cover the usual family
+// bribes — treats, outings, screen time, things to keep — without
+// becoming a full emoji keyboard to scroll through on a phone.
+export const REWARD_EMOJI = [
+  '🎁', '📺', '🎮', '🍦', '🍕', '🍜',
+  '🍭', '🧁', '🛝', '🎢', '⚽', '🚲',
+  '🏊', '🎬', '📚', '🎨', '🧸', '🐶',
+  '🎈', '💤', '🛒', '🎪', '🎤', '🚗',
+]
+
+// A reward may carry a picture that isn't on the list — one of the
+// starters, or something chosen before the list changed. Showing it
+// alongside the choices means opening the form never silently drops it.
+export function emojiChoices(current) {
+  return current && !REWARD_EMOJI.includes(current) ? [current, ...REWARD_EMOJI] : REWARD_EMOJI
+}
+
+export const DEFAULT_REWARD_EMOJI = REWARD_EMOJI[0]
+
 export const MAX_REWARD_COST = 9999
 export const MAX_REWARD_NAME = 40
 
@@ -70,15 +89,19 @@ export async function addReward(familyCode, { label, emoji, cost }) {
   await authReady
   await addDoc(rewardsCollection(familyCode), {
     label,
-    emoji: emoji || '🎁',
+    emoji: emoji || DEFAULT_REWARD_EMOJI,
     cost,
     createdAt: serverTimestamp(),
   })
 }
 
-export async function updateReward(familyCode, rewardId, { label, cost }) {
+export async function updateReward(familyCode, rewardId, { label, cost, emoji }) {
   await authReady
-  await updateDoc(doc(db, 'families', familyCode, 'rewards', rewardId), { label, cost })
+  await updateDoc(doc(db, 'families', familyCode, 'rewards', rewardId), {
+    label,
+    cost,
+    emoji: emoji || DEFAULT_REWARD_EMOJI,
+  })
 }
 
 export async function removeReward(familyCode, rewardId) {
