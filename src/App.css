@@ -1325,3 +1325,97 @@ h1 .t-en {
   color: var(--text-muted);
   text-align: center;
 }
+
+/* ── The board ──
+   Several kids, each with their own timer. One column on a phone,
+   more as the screen allows — an iPad on the kitchen table shows the
+   whole family at once, which is the point of it. */
+.app-board {
+  align-items: flex-start;
+  padding: 20px 16px 40px;
+}
+
+.board {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.board-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 0 4px;
+}
+
+.board-head h1 {
+  text-align: left;
+}
+
+.board-grid {
+  width: 100%;
+  display: grid;
+  /* Cards claim a column when there's room for a comfortable one and
+     share the row otherwise, so the layout follows the screen rather
+     than a guess about which device it is. */
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.focus-card {
+  background: var(--card-bg);
+  border-radius: 28px;
+  padding: 20px 18px 24px;
+  box-shadow: 0 12px 40px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.card-body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* The dial is drawn to a viewBox, so it can simply take the width it
+   is given — no need to guess a pixel size per column count. */
+.pie-timer {
+  width: 100%;
+  height: auto;
+  max-width: 300px;
+}
+
+.pie-touch-target {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.board-add {
+  margin-top: 4px;
+}
+
+/* A card mid-session should be readable across the room, so the
+   running one leans on its dial and drops the chrome around it. */
+.focus-running .card-body {
+  gap: 10px;
+}

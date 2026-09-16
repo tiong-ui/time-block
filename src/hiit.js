@@ -22,12 +22,18 @@ function loadSeconds(key, options, fallback) {
   }
 }
 
-export function loadStoredExerciseSec() {
-  return loadSeconds(EXERCISE_STORAGE_KEY, EXERCISE_OPTIONS, DEFAULT_EXERCISE_SEC)
+// Kids share a device but not their preferences: one is doing 20-second
+// bursts while another does 60, so the choice is remembered per kid.
+export function perKidKey(key, kidId) {
+  return kidId ? `${key}:${kidId}` : key
 }
 
-export function loadStoredRestSec() {
-  return loadSeconds(REST_STORAGE_KEY, REST_OPTIONS, DEFAULT_REST_SEC)
+export function loadStoredExerciseSec(kidId) {
+  return loadSeconds(perKidKey(EXERCISE_STORAGE_KEY, kidId), EXERCISE_OPTIONS, DEFAULT_EXERCISE_SEC)
+}
+
+export function loadStoredRestSec(kidId) {
+  return loadSeconds(perKidKey(REST_STORAGE_KEY, kidId), REST_OPTIONS, DEFAULT_REST_SEC)
 }
 
 export function storeSeconds(key, value) {

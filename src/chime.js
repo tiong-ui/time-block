@@ -282,7 +282,12 @@ const ALARM_MIN_BOOKED_SEC = 60
 // doesn't ring into the evening.
 const ALARM_MAX_SEC = 5 * 60
 
-let alarm = null
+// Several kids can be counting down at once on a shared iPad, so an
+// alarm is a thing you hold rather than a thing the module owns: each
+// caller gets its own handle, and silencing one leaves the others
+// ringing. The set is only so nothing is left running if a caller
+// forgets — stopping is normally done through the handle.
+const liveAlarms = new Set()
 
 function tuneDurationSec(tune) {
   return tune.reduce((end, chord) => Math.max(end, chord.time + chord.duration), 0)
@@ -302,7 +307,7 @@ export function alarmRepeats({ nextAt, cycleSec, horizonSec, stopsAtSec }) {
   return { starts, nextAt: at }
 }
 
-function fillAlarmTo(horizonSec) {
+function fillAlarmTo(alarm, horizonSec) {
   const { starts, nextAt } = alarmRepeats({
     nextAt: alarm.nextAt,
     cycleSec: alarm.cycleSec,
@@ -316,30 +321,40 @@ function fillAlarmTo(horizonSec) {
   alarm.nodes = alarm.nodes.filter(node => node.endsAt > ctx.currentTime)
 }
 
-function refillAlarm() {
-  if (!alarm) return
+function refillAlarm(alarm) {
+  if (!liveAlarms.has(alarm)) return
   if (ctx.currentTime >= alarm.stopsAt) {
     const { onGiveUp } = alarm
-    stopAlarm()
+    silence(alarm)
     if (onGiveUp) onGiveUp()
     return
   }
-  fillAlarmTo(ctx.currentTime + ALARM_LOOKAHEAD_SEC)
+  fillAlarmTo(alarm, ctx.currentTime + ALARM_LOOKAHEAD_SEC)
 }
 
-// Books the alarm to start `delayMs` from now and repeat until stopped.
+function silence(alarm) {
+  if (!liveAlarms.delete(alarm)) return
+  clearInterval(alarm.refill)
+  cancelHandle(alarm.nodes)()
+  alarm.nodes = []
+}
+
+// Books an alarm to start `delayMs` from now and repeat until stopped.
 // `onGiveUp` fires only if it reaches its own cut-off — stopping it by
-// hand is the caller's own doing and needs no callback. Returns false
-// when there's no audio available at all.
+// hand is the caller's own doing and needs no callback.
+//
+// Returns a handle: `stop()` silences this alarm and nothing else, and
+// `ringing` says whether it is still booked. Returns null when there's
+// no audio available at all, so callers can tell "no alarm" from "an
+// alarm that has been silenced".
 export function scheduleAlarm(delayMs, { onGiveUp } = {}) {
   const audioCtx = getContext()
-  if (!audioCtx) return false
+  if (!audioCtx) return null
   if (audioCtx.state === 'suspended') audioCtx.resume()
-  stopAlarm()
 
   const tune = pickTune()
   const startAt = audioCtx.currentTime + Math.max(0, delayMs) / 1000
-  alarm = {
+  const alarm = {
     tune,
     cycleSec: tuneDurationSec(tune) + ALARM_GAP_SEC,
     nextAt: startAt,
@@ -348,22 +363,22 @@ export function scheduleAlarm(delayMs, { onGiveUp } = {}) {
     refill: null,
     onGiveUp,
   }
-  fillAlarmTo(startAt + ALARM_MIN_BOOKED_SEC)
-  alarm.refill = setInterval(refillAlarm, ALARM_REFILL_MS)
-  return true
+  liveAlarms.add(alarm)
+  fillAlarmTo(alarm, startAt + ALARM_MIN_BOOKED_SEC)
+  alarm.refill = setInterval(() => refillAlarm(alarm), ALARM_REFILL_MS)
+
+  return {
+    stop: () => silence(alarm),
+    get ringing() {
+      return liveAlarms.has(alarm)
+    },
+  }
 }
 
-export function stopAlarm() {
-  if (!alarm) return
-  clearInterval(alarm.refill)
-  cancelHandle(alarm.nodes)()
-  alarm = null
-}
-
-// Whether an alarm is currently booked — either counting down to the
-// end of a session or ringing right now.
-export function isAlarmScheduled() {
-  return alarm !== null
+// Everything at once — for leaving the whole board, where no single
+// handle is in scope.
+export function stopAllAlarms() {
+  for (const alarm of [...liveAlarms]) silence(alarm)
 }
 
 // Interval cues for HIIT: a rising double beep to start working, a
