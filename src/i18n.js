@@ -89,6 +89,8 @@ export const STRINGS = {
   redeemFailed: { zh: '兌換失敗，請再試一次。', en: "That didn't go through — please try again." },
   addReward: { zh: '＋ 新增獎勵', en: '+ Add a reward' },
   editReward: { zh: '修改{reward}', en: 'Edit {reward}' },
+  rewardEmojiOption: { zh: '選擇 {emoji}', en: 'Choose {emoji}' },
+  pickRewardEmoji: { zh: '選一個圖案', en: 'Pick a picture' },
   editRewardTitle: { zh: '修改獎勵', en: 'Edit the reward' },
   saveChanges: { zh: '儲存', en: 'Save' },
   manageRewards: { zh: '🔑 大人管理獎勵', en: '🔑 Manage rewards' },

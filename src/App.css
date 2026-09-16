@@ -629,13 +629,13 @@ h1 .t-en {
   font-size: 2rem;
 }
 
-.avatar-grid {
+.emoji-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 8px;
 }
 
-.avatar-btn {
+.emoji-btn {
   font-size: 1.4rem;
   padding: 8px 0;
   border: none;
@@ -645,11 +645,11 @@ h1 .t-en {
   transition: transform 0.12s ease, background 0.12s ease;
 }
 
-.avatar-btn:hover {
+.emoji-btn:hover {
   transform: scale(1.1);
 }
 
-.avatar-btn.active {
+.emoji-btn.active {
   background: var(--accent);
   box-shadow: 0 0 0 2px var(--accent);
 }
@@ -1317,4 +1317,11 @@ h1 .t-en {
   margin: 0;
   padding: 0;
   background: none;
+}
+
+.pick-emoji-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
 }

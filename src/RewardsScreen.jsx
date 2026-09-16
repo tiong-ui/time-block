@@ -9,6 +9,8 @@ import {
   validateReward,
   labelToText,
   editedLabel,
+  emojiChoices,
+  DEFAULT_REWARD_EMOJI,
 } from './rewards.js'
 import { watchFamily, familyHasPin } from './family.js'
 import { redeemReward, NotEnoughStarsError } from './kids.js'
@@ -16,6 +18,7 @@ import { errorDetail } from './errorMessage.js'
 import { tBoth } from './i18n.js'
 import { T, Label } from './T.jsx'
 import { PinGate, PinSetup } from './PinGate.jsx'
+import EmojiGrid from './EmojiGrid.jsx'
 
 // What the stars are for. Redeeming is the kid's to do; the list
 // itself — what's on it and what it costs — is a grown-up's, behind
@@ -96,7 +99,7 @@ export default function RewardsScreen({ familyCode, kid, unlocked, onUnlock, onB
       onRemove={rewardId => removeReward(familyCode, rewardId).catch(err => report(err, 'errEditReward'))}
       onAdd={async value => {
         try {
-          await addReward(familyCode, { ...value, emoji: '🎁' })
+          await addReward(familyCode, value)
         } catch (err) {
           report(err, 'errAddReward')
         }
@@ -106,6 +109,7 @@ export default function RewardsScreen({ familyCode, kid, unlocked, onUnlock, onB
           await updateReward(familyCode, reward.id, {
             label: editedLabel(reward.label, value.label),
             cost: value.cost,
+            emoji: value.emoji,
           })
         } catch (err) {
           report(err, 'errEditReward')
@@ -205,6 +209,7 @@ function RewardRow({
           saveKey="saveChanges"
           initialName={labelToText(reward.label)}
           initialCost={String(reward.cost)}
+          initialEmoji={reward.emoji ?? DEFAULT_REWARD_EMOJI}
           onCancel={onCancelEdit}
           onSave={onSaveEdit}
         />
@@ -285,9 +290,14 @@ function ConfirmRedeem({ reward, balance, onCancel, onConfirm }) {
 
 // One form for both adding and editing — the fields and the rules are
 // identical, only the wording and what it starts with differ.
-function RewardForm({ titleKey, saveKey, initialName = '', initialCost = '', onSave, onCancel }) {
+function RewardForm({
+  titleKey, saveKey,
+  initialName = '', initialCost = '', initialEmoji = DEFAULT_REWARD_EMOJI,
+  onSave, onCancel,
+}) {
   const [name, setName] = useState(initialName)
   const [cost, setCost] = useState(initialCost)
+  const [emoji, setEmoji] = useState(initialEmoji)
   const [problem, setProblem] = useState(null)
 
   function handleSubmit(event) {
@@ -298,7 +308,7 @@ function RewardForm({ titleKey, saveKey, initialName = '', initialCost = '', onS
       return
     }
     setProblem(null)
-    onSave(result.value)
+    onSave({ ...result.value, emoji })
   }
 
   return (
@@ -317,6 +327,13 @@ function RewardForm({ titleKey, saveKey, initialName = '', initialCost = '', onS
         onChange={e => setCost(e.target.value.replace(/\D/g, ''))}
         placeholder={tBoth('rewardCostPlaceholder')}
         inputMode="numeric"
+      />
+      <p className="pick-emoji-label"><T k="pickRewardEmoji" /></p>
+      <EmojiGrid
+        options={emojiChoices(initialEmoji)}
+        value={emoji}
+        onChange={setEmoji}
+        labelKey="rewardEmojiOption"
       />
       {problem && <p className="form-error"><T k={problem} /></p>}
       <div className="confirm-actions">

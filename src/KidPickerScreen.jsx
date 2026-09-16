@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AVATARS } from './avatars.js'
-import AvatarGrid from './AvatarGrid.jsx'
+import EmojiGrid from './EmojiGrid.jsx'
 import { errorDetail } from './errorMessage.js'
 import { T } from './T.jsx'
 import { tBoth, tZh } from './i18n.js'
@@ -60,7 +60,7 @@ export default function KidPickerScreen({ kids, kidsLoaded, loadError, onSelectK
             autoComplete="off"
             maxLength={20}
           />
-          <AvatarGrid value={avatar} onChange={setAvatar} />
+          <EmojiGrid value={avatar} onChange={setAvatar} />
           {error && <p className="form-error">{error}</p>}
           <button className="preset-btn wide-btn" type="submit" disabled={busy || !name.trim()}>
             <T k={busy ? 'adding' : 'add'} />

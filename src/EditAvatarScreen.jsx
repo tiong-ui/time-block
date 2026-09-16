@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import AvatarGrid from './AvatarGrid.jsx'
+import EmojiGrid from './EmojiGrid.jsx'
 import { errorDetail } from './errorMessage.js'
 import { T } from './T.jsx'
 import { tBoth } from './i18n.js'
@@ -31,7 +31,7 @@ export default function EditAvatarScreen({ kid, onSave, onBack }) {
       <div className="hero-icon" aria-hidden="true">{avatar}</div>
       <h1><T k="avatarTitle" vars={{ name: kid.name }} /></h1>
       <p className="subtitle"><T k="pickNewAvatar" /></p>
-      <AvatarGrid value={avatar} onChange={handlePick} />
+      <EmojiGrid value={avatar} onChange={handlePick} />
       {error && <p className="form-error">{error}</p>}
       <button className="text-btn" onClick={onBack} disabled={busy}>
         <T k="back" />
