@@ -18,6 +18,10 @@ export const STRINGS = {
   resume: { zh: '繼續', en: 'Resume' },
   stop: { zh: '停止', en: 'Stop' },
 
+  startFocus: { zh: '開始', en: 'Start' },
+  expandCard: { zh: '展開{name}的計時器', en: "Open {name}'s timer" },
+  collapseCard: { zh: '收起{name}的計時器', en: "Close {name}'s timer" },
+
   // HIIT
   exerciseDuration: { zh: '運動多久', en: 'Exercise for' },
   restDuration: { zh: '休息多久', en: 'Rest for' },

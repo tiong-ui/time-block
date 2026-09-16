@@ -22,7 +22,7 @@ import { T } from './T.jsx'
 import JarDropAnimation from './JarDropAnimation.jsx'
 import PieTimer from './PieTimer'
 import { playIntervalCue, scheduleAlarm, scheduleIntervalCues } from './chime'
-import { saveSession, clearSession, restoredTimerState } from './session.js'
+import { saveSession, clearSession, restoredTimerState, storeLastKid } from './session.js'
 
 // One kid's focus session, start to finish, owning everything it needs:
 // its own countdown, its own HIIT cycle, its own booked audio, its own
@@ -50,7 +50,10 @@ function loadStoredActivity(kidId) {
   }
 }
 
-export default function FocusCard({ familyCode, kid, restored, onViewStarJar, onEditAvatar }) {
+export default function FocusCard({
+  familyCode, kid, restored, collapsed, onToggle, onActiveChange,
+  onViewStarJar, onEditAvatar,
+}) {
   const kidId = kid.id
 
   // Restoring happens as this card's opening state rather than in an
@@ -207,6 +210,10 @@ export default function FocusCard({ familyCode, kid, restored, onViewStarJar, on
     })
     scheduleAudioFrom(now)
     setPhase('running')
+    // This device now belongs to whoever just started, until someone
+    // else starts something.
+    storeLastKid(kidId)
+    onActiveChange(kidId, true)
   }
 
   function togglePause() {
@@ -234,6 +241,7 @@ export default function FocusCard({ familyCode, kid, restored, onViewStarJar, on
     clearSession(kidId)
     setPhase('select')
     setPaused(false)
+    onActiveChange(kidId, false)
   }
 
   function awardStars() {
@@ -340,9 +348,34 @@ export default function FocusCard({ familyCode, kid, restored, onViewStarJar, on
     ? (intervalTotalMs > 0 ? intervalRemainingMs / intervalTotalMs : 0)
     : (totalMs > 0 ? remainingMs / totalMs : 0)
 
+  // Collapsing only changes what is drawn. The card stays mounted, so
+  // its clocks, its booked audio and its saved session carry on exactly
+  // as they were — a closed card is still counting down.
+  if (collapsed) {
+    return (
+      <button
+        className="focus-card focus-collapsed"
+        onClick={onToggle}
+        aria-expanded={false}
+        aria-label={tBoth('expandCard', { name: kid.name })}
+      >
+        <span className="collapsed-avatar" aria-hidden="true">{kid.avatar}</span>
+        <span className="collapsed-name">{kid.name}</span>
+        <span className="collapsed-stars">⭐{starBalance(kid).balance}</span>
+        <span className="collapsed-start bi-inline"><T k="startFocus" /></span>
+      </button>
+    )
+  }
+
   return (
     <section className={`focus-card focus-${phase}`}>
-      <KidHeader kid={kid} onViewStarJar={onViewStarJar} onEditAvatar={onEditAvatar} />
+      <KidHeader
+        kid={kid}
+        phase={phase}
+        onToggle={onToggle}
+        onViewStarJar={onViewStarJar}
+        onEditAvatar={onEditAvatar}
+      />
 
       {phase === 'select' && (
         <SelectBody
@@ -386,7 +419,7 @@ export default function FocusCard({ familyCode, kid, restored, onViewStarJar, on
   )
 }
 
-function KidHeader({ kid, onViewStarJar, onEditAvatar }) {
+function KidHeader({ kid, phase, onToggle, onViewStarJar, onEditAvatar }) {
   return (
     <div className="kid-bar">
       <span className="kid-bar-name">
@@ -400,9 +433,23 @@ function KidHeader({ kid, onViewStarJar, onEditAvatar }) {
         </button>
         {kid.name}
       </span>
-      <button className="text-btn bi-inline" onClick={onViewStarJar}>
-        ⭐ <T k="starJar" /> ({starBalance(kid).balance})
-      </button>
+      <span className="kid-bar-actions">
+        <button className="text-btn bi-inline" onClick={onViewStarJar}>
+          ⭐ <T k="starJar" /> ({starBalance(kid).balance})
+        </button>
+        {/* Only an idle card can be put away. One that's counting down
+            or waiting to be collected has to stay where it can be seen. */}
+        {phase === 'select' && (
+          <button
+            className="collapse-btn"
+            onClick={onToggle}
+            aria-expanded
+            aria-label={tBoth('collapseCard', { name: kid.name })}
+          >
+            ▴
+          </button>
+        )}
+      </span>
     </div>
   )
 }

@@ -104,3 +104,25 @@ export function restoredTimerState(restored, now = Date.now()) {
     session,
   }
 }
+
+// Who last started a session on this device. A shared iPad is used by
+// everyone, but a phone is nearly always one kid — remembering them
+// means the board opens on the right card without anyone configuring
+// anything, and quietly follows if that changes.
+const LAST_KID_STORAGE_KEY = 'focus-timer-last-kid'
+
+export function loadLastKid() {
+  try {
+    return localStorage.getItem(LAST_KID_STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
+export function storeLastKid(kidId) {
+  try {
+    localStorage.setItem(LAST_KID_STORAGE_KEY, kidId)
+  } catch {
+    // Storage can be unavailable; the board just opens collapsed.
+  }
+}

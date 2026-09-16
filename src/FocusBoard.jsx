@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { THEMES } from './themes'
 import { tBoth } from './i18n.js'
 import { T } from './T.jsx'
 import FocusCard from './FocusCard.jsx'
-import { loadSessions } from './session.js'
+import { loadSessions, loadLastKid } from './session.js'
 
 // Every kid in the family, side by side, each with their own timer.
 //
@@ -11,6 +11,12 @@ import { loadSessions } from './session.js'
 // the kitchen table it's the whole family at once, which is the point:
 // one kid can start reading while another is halfway through a HIIT
 // round and a third has already finished.
+//
+// Most of the time, though, a device is one kid's. So an idle card
+// folds down to a single row and the board opens on whoever last used
+// this device — no setting to keep up to date, nobody hidden, and any
+// kid one tap away. A card that is counting down or waiting for its
+// stars never folds: it has to stay where it can be seen.
 export default function FocusBoard({
   familyCode, kids, kidsLoaded, loadError,
   colorTheme, onColorThemeChange,
@@ -20,6 +26,38 @@ export default function FocusBoard({
   // here, so a reload brings the whole board back rather than whichever
   // card happens to render first.
   const [restored] = useState(() => loadSessions())
+  // Cards that are counting down or waiting to be collected. Seeded
+  // from what was restored, then kept up to date by the cards
+  // themselves as timers start and stop.
+  const [busyIds, setBusyIds] = useState(() => new Set(Object.keys(restored)))
+  const [openIds, setOpenIds] = useState(() => {
+    const last = loadLastKid()
+    return new Set(last ? [last] : [])
+  })
+
+  const setBusy = useCallback((kidId, busy) => {
+    setBusyIds(prev => {
+      // Returning the same set when nothing changed lets React bail
+      // out, so a card re-rendering can't set off a loop.
+      if (prev.has(kidId) === busy) return prev
+      const next = new Set(prev)
+      if (busy) next.add(kidId)
+      else next.delete(kidId)
+      return next
+    })
+  }, [])
+
+  const toggle = useCallback(kidId => {
+    setOpenIds(prev => {
+      const next = new Set(prev)
+      if (next.has(kidId)) next.delete(kidId)
+      else next.add(kidId)
+      return next
+    })
+  }, [])
+
+  // One kid in the family has nothing to fold away from.
+  const foldable = kids.length > 1
 
   return (
     <div className="board">
@@ -42,6 +80,9 @@ export default function FocusBoard({
             familyCode={familyCode}
             kid={kid}
             restored={restored[kid.id] ?? null}
+            collapsed={foldable && !busyIds.has(kid.id) && !openIds.has(kid.id)}
+            onToggle={() => toggle(kid.id)}
+            onActiveChange={setBusy}
             onViewStarJar={() => onViewStarJar(kid.id)}
             onEditAvatar={() => onEditAvatar(kid.id)}
           />
