@@ -24,12 +24,21 @@ import EmojiGrid from './EmojiGrid.jsx'
 // itself — what's on it and what it costs — is a grown-up's, behind
 // the same PIN as handing out stars. A kid who can re-price "a new
 // toy" to 5 stars has taken the meaning out of the whole thing.
+//
+// Two separate things, which this used to conflate: whether the PIN
+// has been entered, and whether a grown-up is managing right now. The
+// PIN lasts across the star screens so a parent types it once; the
+// managing view does not, so opening rewards is always the kid's menu
+// until someone asks for it. A parent who has already unlocked gets
+// in with a tap and no second PIN.
 export default function RewardsScreen({ familyCode, kid, unlocked, onUnlock, onBack }) {
   const [rewards, setRewards] = useState(null)
   const [family, setFamily] = useState(undefined)
   const [error, setError] = useState(null)
   const [celebrating, setCelebrating] = useState(null)
   const [gateOpen, setGateOpen] = useState(false)
+  // Deliberately not persisted: every visit starts as the kid's menu.
+  const [managing, setManaging] = useState(false)
   const seededRef = useRef(false)
 
   const { balance } = starBalance(kid)
@@ -86,15 +95,16 @@ export default function RewardsScreen({ familyCode, kid, unlocked, onUnlock, onB
       balance={balance}
       error={error}
       celebrating={celebrating}
-      unlocked={unlocked}
+      managing={managing}
       gate={
         gateOpen && family !== undefined
           ? (familyHasPin(family)
-              ? <PinGate family={family} onUnlocked={() => { setGateOpen(false); onUnlock() }} />
-              : <PinSetup familyCode={familyCode} onSaved={() => { setGateOpen(false); onUnlock() }} />)
+              ? <PinGate family={family} onUnlocked={() => { setGateOpen(false); onUnlock(); setManaging(true) }} />
+              : <PinSetup familyCode={familyCode} onSaved={() => { setGateOpen(false); onUnlock(); setManaging(true) }} />)
           : null
       }
-      onOpenGate={() => setGateOpen(true)}
+      onManage={() => (unlocked ? setManaging(true) : setGateOpen(true))}
+      onDoneManaging={() => setManaging(false)}
       onRedeem={handleRedeem}
       onRemove={rewardId => removeReward(familyCode, rewardId).catch(err => report(err, 'errEditReward'))}
       onAdd={async value => {
@@ -121,15 +131,22 @@ export default function RewardsScreen({ familyCode, kid, unlocked, onUnlock, onB
 }
 
 // Kept apart from the Firestore work above so the screen can be
-// rendered from a fixed list of rewards, locked or unlocked, which a
+// rendered from a fixed list of rewards, managing or not, which a
 // test environment can reach and the live collection can't.
 export function RewardsView({
-  kid, rewards, balance, error, celebrating, unlocked, gate,
-  onOpenGate, onRedeem, onRemove, onAdd, onEdit, onBack,
+  kid, rewards, balance, error, celebrating, managing, gate,
+  onManage, onDoneManaging, onRedeem, onRemove, onAdd, onEdit, onBack,
 }) {
   const [confirming, setConfirming] = useState(null)
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState(null)
+
+  // Leaving the managing view drops any half-finished edit with it.
+  function stopManaging() {
+    setAdding(false)
+    setEditing(null)
+    onDoneManaging()
+  }
 
   return (
     <div className="screen rewards-screen">
@@ -141,13 +158,13 @@ export function RewardsView({
       {rewards === null && !error && <p className="subtitle"><T k="loading" /></p>}
       {rewards?.length === 0 && <p className="subtitle"><T k="noRewardsYet" /></p>}
 
-      <ul className={`reward-list${unlocked ? ' reward-list-managing' : ''}`}>
+      <ul className={`reward-list${managing ? ' reward-list-managing' : ''}`}>
         {(rewards ?? []).map(reward => (
           <RewardRow
             key={reward.id}
             reward={reward}
             balance={balance}
-            unlocked={unlocked}
+            managing={managing}
             celebrating={celebrating === reward.id}
             editing={editing === reward.id}
             onRedeem={() => setConfirming(reward)}
@@ -159,7 +176,7 @@ export function RewardsView({
         ))}
       </ul>
 
-      {unlocked && (adding
+      {managing && (adding
         ? <RewardForm
             titleKey="newReward"
             saveKey="saveReward"
@@ -172,11 +189,19 @@ export function RewardsView({
 
       {gate}
 
-      {/* The way in and out of grown-up mode. Locked, the list is a menu
-          a kid can choose from; unlocked, it's something to be changed. */}
-      {!gate && (unlocked
-        ? <p className="confirm-grownup managing-note"><T k="managingRewards" /></p>
-        : <button className="text-btn bi-inline" onClick={onOpenGate}>
+      {/* The way in and out of grown-up mode. As a menu, the list is
+          something a kid chooses from; managing, it's something to be
+          changed — and there's a way back out that isn't leaving. */}
+      {!gate && (managing
+        ? (
+          <>
+            <p className="confirm-grownup managing-note"><T k="managingRewards" /></p>
+            <button className="preset-btn wide-btn" onClick={stopManaging}>
+              <T k="doneManaging" />
+            </button>
+          </>
+        )
+        : <button className="text-btn bi-inline" onClick={onManage}>
             <T k="manageRewards" />
           </button>)}
 
@@ -195,7 +220,7 @@ export function RewardsView({
 }
 
 function RewardRow({
-  reward, balance, unlocked, celebrating, editing,
+  reward, balance, managing, celebrating, editing,
   onRedeem, onRemove, onStartEdit, onCancelEdit, onSaveEdit,
 }) {
   const affordable = canAfford(balance, reward.cost)
@@ -241,7 +266,7 @@ function RewardRow({
           </span>
         )}
       </span>
-      {unlocked && (
+      {managing && (
         <span className="reward-tools">
           <button
             className="reward-remove"
