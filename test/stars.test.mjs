@@ -7,6 +7,7 @@ import { validateReward, labelToText, editedLabel, emojiChoices, REWARD_EMOJI } 
 import {
   withHiit, HIIT_ACTIVITY, DEFAULT_ACTIVITIES, ACTIVITY_EMOJI,
   validateActivity, emojiChoices as activityEmojiChoices,
+  labelHalves, labelFromHalves,
 } from '../src/activities.js'
 
 let pass = 0, fail = 0
@@ -91,9 +92,25 @@ eq(withHiit([{ id: 'a' }, { id: 'b' }]).map(a => a.id), ['a', 'b', 'hiit'], "the
 eq(HIIT_ACTIVITY.builtIn, true, 'and it is marked as not theirs to change')
 eq(DEFAULT_ACTIVITIES.some(a => a.id === 'hiit'), false, 'HIIT is never seeded as an editable task')
 
-eq(validateActivity({ name: '  小提琴  ' }), { ok: true, value: { label: '小提琴' } }, 'trims a typed task name')
-eq(validateActivity({ name: '   ' }).reason, 'name-missing', 'a blank name is rejected')
-eq(validateActivity({ name: 'x'.repeat(21) }).reason, 'name-too-long', 'an unreasonably long one is rejected')
+// Both languages are editable, and either one alone is enough — a
+// family that only wants 圍棋 shouldn't have to invent an English word.
+eq(validateActivity({ zh: ' 小提琴 ', en: ' Violin ' }), { ok: true, value: { label: { zh: '小提琴', en: 'Violin' } } }, 'both names are kept, trimmed')
+eq(validateActivity({ zh: '圍棋', en: '' }), { ok: true, value: { label: '圍棋' } }, 'Chinese alone is allowed')
+eq(validateActivity({ zh: '', en: 'Chess' }), { ok: true, value: { label: 'Chess' } }, 'English alone is too')
+eq(validateActivity({ zh: ' ', en: ' ' }).reason, 'name-missing', 'but not neither')
+eq(validateActivity({ zh: 'x'.repeat(21), en: 'ok' }).reason, 'name-too-long', 'an unreasonably long one is rejected')
+eq(validateActivity({ zh: 'ok', en: 'x'.repeat(21) }).reason, 'name-too-long', 'in either box')
+
+// A single name is stored as a plain string, not a pair with an empty
+// half — otherwise the card renders a blank second line under it.
+eq(typeof labelFromHalves({ zh: '圍棋', en: '' }), 'string', 'one name is stored as a plain string')
+eq(typeof labelFromHalves({ zh: '圍棋', en: 'Go' }), 'object', 'two names are stored as a pair')
+
+// And the form opens on whatever is there.
+eq(labelHalves({ zh: '鋼琴', en: 'Piano' }), { zh: '鋼琴', en: 'Piano' }, 'a bilingual task fills both boxes')
+eq(labelHalves('圍棋'), { zh: '圍棋', en: '' }, 'a single name opens in the Chinese box')
+eq(labelHalves(undefined), { zh: '', en: '' }, 'a missing label opens empty rather than crashing')
+eq(labelHalves(labelFromHalves({ zh: 'a', en: 'b' })), { zh: 'a', en: 'b' }, 'what is saved is what reopens')
 
 eq(activityEmojiChoices('📝'), ACTIVITY_EMOJI, 'a picture already on the list adds nothing')
 eq(activityEmojiChoices('🦖')[0], '🦖', 'one that is not is offered first')
