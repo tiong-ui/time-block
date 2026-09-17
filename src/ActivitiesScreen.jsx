@@ -7,14 +7,14 @@ import {
   removeActivity,
   validateActivity,
   labelToText,
-  editedLabel,
+  labelHalves,
   emojiChoices,
   DEFAULT_ACTIVITY_EMOJI,
   HIIT_ACTIVITY,
   MAX_ACTIVITY_NAME,
 } from './activities.js'
 import { errorDetail } from './errorMessage.js'
-import { tBoth } from './i18n.js'
+import { tBoth, tZh, tEn } from './i18n.js'
 import { T, Label } from './T.jsx'
 import EmojiGrid from './EmojiGrid.jsx'
 
@@ -55,10 +55,7 @@ export default function ActivitiesScreen({ familyCode, onBack }) {
       }}
       onEdit={async (activity, value) => {
         try {
-          await updateActivity(familyCode, activity.id, {
-            label: editedLabel(activity.label, value.label),
-            emoji: value.emoji,
-          })
+          await updateActivity(familyCode, activity.id, value)
         } catch (err) { report(err) }
       }}
       onRemove={id => removeActivity(familyCode, id).catch(report)}
@@ -90,7 +87,7 @@ export function ActivitiesView({ activities, error, onAdd, onEdit, onRemove, onB
               <ActivityForm
                 titleKey="editActivityTitle"
                 saveKey="saveChanges"
-                initialName={labelToText(activity.label)}
+                initialNames={labelHalves(activity.label)}
                 initialEmoji={activity.emoji ?? DEFAULT_ACTIVITY_EMOJI}
                 onCancel={() => setEditing(null)}
                 onSave={async value => { await onEdit(activity, value); setEditing(null) }}
@@ -148,14 +145,20 @@ export function ActivitiesView({ activities, error, onAdd, onEdit, onRemove, onB
   )
 }
 
-function ActivityForm({ titleKey, saveKey, initialName = '', initialEmoji = DEFAULT_ACTIVITY_EMOJI, onSave, onCancel }) {
-  const [name, setName] = useState(initialName)
+function ActivityForm({
+  titleKey, saveKey,
+  initialNames = { zh: '', en: '' },
+  initialEmoji = DEFAULT_ACTIVITY_EMOJI,
+  onSave, onCancel,
+}) {
+  const [zh, setZh] = useState(initialNames.zh)
+  const [en, setEn] = useState(initialNames.en)
   const [emoji, setEmoji] = useState(initialEmoji)
   const [problem, setProblem] = useState(null)
 
   function handleSubmit(event) {
     event.preventDefault()
-    const result = validateActivity({ name })
+    const result = validateActivity({ zh, en })
     if (!result.ok) return setProblem('activityNameNeeded')
     setProblem(null)
     onSave({ ...result.value, emoji })
@@ -164,11 +167,23 @@ function ActivityForm({ titleKey, saveKey, initialName = '', initialEmoji = DEFA
   return (
     <form className="add-reward-form" onSubmit={handleSubmit}>
       <p className="confirm-title"><T k={titleKey} /></p>
+      {/* Two boxes rather than one, because the app shows both
+          languages — a task typed into a single box could only ever be
+          half a label. Either one on its own is allowed. */}
       <input
         className="text-input"
-        value={name}
-        onChange={e => setName(e.target.value)}
-        placeholder={tBoth('activityNamePlaceholder')}
+        value={zh}
+        onChange={e => setZh(e.target.value)}
+        placeholder={tZh('activityNameZh')}
+        lang="zh-Hant"
+        maxLength={MAX_ACTIVITY_NAME}
+      />
+      <input
+        className="text-input"
+        value={en}
+        onChange={e => setEn(e.target.value)}
+        placeholder={tEn('activityNameEn')}
+        lang="en"
         maxLength={MAX_ACTIVITY_NAME}
       />
       <p className="pick-emoji-label"><T k="pickRewardEmoji" /></p>

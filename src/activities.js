@@ -133,21 +133,38 @@ export function labelToText(label) {
   return label ?? ''
 }
 
-// Renaming makes it the family's own words; leaving the name alone
-// keeps whatever it had, both languages included.
-export function editedLabel(original, typedName) {
-  const trimmed = (typedName ?? '').trim()
-  if (trimmed === labelToText(original)) return original
-  return trimmed
+// A label split back into the two boxes the form shows. A label stored
+// as a plain string is one a family typed in whichever language they
+// were working in; it goes in the Chinese box, which is the one the
+// app leads with.
+export function labelHalves(label) {
+  if (isBilingualLabel(label)) return { zh: label.zh ?? '', en: label.en ?? '' }
+  return { zh: label ?? '', en: '' }
+}
+
+// Both halves, or the one that was filled in. Storing a single name as
+// a plain string rather than a pair with an empty half is what keeps
+// the card from rendering a blank second line under it.
+export function labelFromHalves({ zh, en }) {
+  const zhText = (zh ?? '').trim()
+  const enText = (en ?? '').trim()
+  if (zhText && enText) return { zh: zhText, en: enText }
+  return zhText || enText
 }
 
 export function emojiChoices(current) {
   return current && !ACTIVITY_EMOJI.includes(current) ? [current, ...ACTIVITY_EMOJI] : ACTIVITY_EMOJI
 }
 
-export function validateActivity({ name }) {
-  const trimmed = (name ?? '').trim()
-  if (!trimmed) return { ok: false, reason: 'name-missing' }
-  if (trimmed.length > MAX_ACTIVITY_NAME) return { ok: false, reason: 'name-too-long' }
-  return { ok: true, value: { label: trimmed } }
+// One of the two names is enough — a family that only wants 圍棋
+// shouldn't have to invent an English word for it, and the other way
+// round. Both is better, and what the starters do.
+export function validateActivity({ zh, en }) {
+  const zhText = (zh ?? '').trim()
+  const enText = (en ?? '').trim()
+  if (!zhText && !enText) return { ok: false, reason: 'name-missing' }
+  if (zhText.length > MAX_ACTIVITY_NAME || enText.length > MAX_ACTIVITY_NAME) {
+    return { ok: false, reason: 'name-too-long' }
+  }
+  return { ok: true, value: { label: labelFromHalves({ zh: zhText, en: enText }) } }
 }
