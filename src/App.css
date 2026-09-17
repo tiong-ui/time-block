@@ -1561,3 +1561,9 @@ h1 .t-en {
   padding-left: 16px;
   padding-right: 16px;
 }
+
+/* HIIT sits in the list so its absence doesn't look like a bug, but
+   it isn't the family's to change. */
+.activity-builtin {
+  opacity: 0.7;
+}

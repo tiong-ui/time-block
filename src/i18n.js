@@ -111,6 +111,21 @@ export const STRINGS = {
   rewardCostNeeded: { zh: '星星數要是大於 0 的整數', en: 'Star cost must be a whole number above 0' },
   spendable: { zh: '可以用', en: 'To spend' },
 
+  // Focus tasks
+  manageActivities: { zh: '專心項目', en: 'Focus Tasks' },
+  manageActivitiesWhy: { zh: '孩子開始計時前可以選的項目', en: 'What kids can pick before a timer starts' },
+  addActivity: { zh: '＋ 新增項目', en: '+ Add a task' },
+  newActivity: { zh: '新的項目', en: 'A new task' },
+  editActivityTitle: { zh: '修改項目', en: 'Edit the task' },
+  activityNamePlaceholder: { zh: '項目名稱', en: 'Task name' },
+  activityNameNeeded: { zh: '幫項目取個名字', en: 'Give the task a name' },
+  editActivity: { zh: '修改{name}', en: 'Edit {name}' },
+  removeActivity: { zh: '刪掉{name}', en: 'Remove {name}' },
+  noActivitiesYet: { zh: '還沒有項目，新增一個吧！', en: 'No tasks yet — add one!' },
+  builtIn: { zh: '內建', en: 'Built in' },
+  errLoadActivities: { zh: '讀不到項目清單{detail}，請檢查網路。', en: "Couldn't load the tasks{detail}. Check your connection." },
+  errSaveActivity: { zh: '存不起來{detail}，請再試一次。', en: "Couldn't save that{detail}. Please try again." },
+
   // Grown-up area
   grownUp: { zh: '大人專區', en: 'Grown-ups' },
   grownUpTitle: { zh: '幫{name}加星星', en: 'Add stars for {name}' },

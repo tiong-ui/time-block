@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ACTIVITIES } from './activities.js'
+
 import { watchLedgerMonth } from './ledger.js'
 import {
   WEEKDAY_KEYS,
@@ -142,19 +142,18 @@ export function StarCalendarView({ year, month, entries, error, onShift }) {
 
 function CalendarRow({ entry }) {
   const spent = entry.kind === 'spent'
-  const activity = ACTIVITIES.find(a => a.id === entry.activityId) ?? null
   return (
     <li className={`log-row${spent ? ' log-row-spent' : ''}`}>
       <span className="log-emoji" aria-hidden="true">
-        {spent ? (entry.rewardEmoji ?? '🎁') : entry.manual ? '🙌' : (activity?.emoji ?? '🎯')}
+        {spent ? (entry.rewardEmoji ?? '🎁') : entry.manual ? '🙌' : (entry.activityEmoji ?? '🎯')}
       </span>
       <span className="log-what">
         {spent
           ? <Label value={entry.rewardLabel} />
           : entry.manual
             ? (entry.note ? <Label value={entry.note} /> : <T k="manualStar" />)
-            : activity
-              ? <Label value={activity.label} />
+            : entry.activityLabel
+              ? <Label value={entry.activityLabel} />
               : <T k="justFocus" />}
       </span>
       <span className="log-amount">{spent ? '−' : '+'}{entry.stars}⭐</span>
