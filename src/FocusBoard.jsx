@@ -58,6 +58,17 @@ export default function FocusBoard({
 
   // One kid in the family has nothing to fold away from.
   const foldable = kids.length > 1
+  const isCollapsed = kid => foldable && !busyIds.has(kid.id) && !openIds.has(kid.id)
+
+  // Open cards first, folded ones beneath. Folding a kid away is a way
+  // of saying "not this one, not now", so leaving them above whoever is
+  // actually focusing reads as backwards. Family order is kept within
+  // each group.
+  //
+  // Sorted here rather than with CSS `order` so the reading order and
+  // the tab order match what's on screen. React reconciles by key, so
+  // a card that moves is moved, not rebuilt — its timer carries on.
+  const ordered = [...kids].sort((a, b) => Number(isCollapsed(a)) - Number(isCollapsed(b)))
 
   return (
     <div className="board">
@@ -74,13 +85,13 @@ export default function FocusBoard({
       )}
 
       <div className="board-grid">
-        {kids.map(kid => (
+        {ordered.map(kid => (
           <FocusCard
             key={kid.id}
             familyCode={familyCode}
             kid={kid}
             restored={restored[kid.id] ?? null}
-            collapsed={foldable && !busyIds.has(kid.id) && !openIds.has(kid.id)}
+            collapsed={isCollapsed(kid)}
             onToggle={() => toggle(kid.id)}
             onActiveChange={setBusy}
             onViewStarJar={() => onViewStarJar(kid.id)}
