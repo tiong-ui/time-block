@@ -1395,15 +1395,33 @@ h1 .t-en {
   text-align: left;
 }
 
+/* Flex rather than a grid, because the number of columns has to follow
+   the number of *open* cards, not the width of the screen. A grid's
+   columns exist whether anything fills them or not, so a folded kid
+   would go on reserving a column and push the one kid actually
+   focusing off to one side. */
 .board-grid {
   width: 100%;
-  display: grid;
-  /* Cards claim a column when there's room for a comfortable one and
-     share the row otherwise, so the layout follows the screen rather
-     than a guess about which device it is. */
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
   gap: 18px;
-  align-items: start;
+}
+
+/* An open card takes a comfortable column's worth and shares the row
+   with any others, but never stretches across a whole iPad on its own
+   — a dial the size of a dinner plate helps nobody. */
+.board-grid > .focus-card {
+  flex: 1 1 320px;
+  max-width: 460px;
+}
+
+/* A folded kid is a row, not a column: full width, on its own line,
+   taking only the height it needs. */
+.board-grid > .focus-collapsed {
+  flex: 1 1 100%;
+  max-width: none;
 }
 
 .focus-card {
