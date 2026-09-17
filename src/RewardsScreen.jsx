@@ -141,7 +141,7 @@ export function RewardsView({
       {rewards === null && !error && <p className="subtitle"><T k="loading" /></p>}
       {rewards?.length === 0 && <p className="subtitle"><T k="noRewardsYet" /></p>}
 
-      <ul className="reward-list">
+      <ul className={`reward-list${unlocked ? ' reward-list-managing' : ''}`}>
         {(rewards ?? []).map(reward => (
           <RewardRow
             key={reward.id}
@@ -219,44 +219,48 @@ function RewardRow({
 
   return (
     <li className={`reward-row${affordable ? ' reward-affordable' : ''}`}>
-      <div className="reward-head">
-        <span className="reward-emoji" aria-hidden="true">{reward.emoji ?? '🎁'}</span>
-        <span className="reward-name"><Label value={reward.label} /></span>
-        {unlocked && (
-          <>
-            <button
-              className="reward-remove"
-              onClick={onStartEdit}
-              aria-label={tBoth('editReward', { reward: labelText(reward.label) })}
-              title={tBoth('editReward', { reward: labelText(reward.label) })}
-            >
-              ✏️
-            </button>
-            <button
-              className="reward-remove"
-              onClick={onRemove}
-              aria-label={tBoth('removeReward', { reward: labelText(reward.label) })}
-              title={tBoth('removeReward', { reward: labelText(reward.label) })}
-            >
-              ✕
-            </button>
-          </>
+      <span className="reward-emoji" aria-hidden="true">{reward.emoji ?? '🎁'}</span>
+      <span className="reward-name"><Label value={reward.label} /></span>
+      {/* The price is just a number and a star, so it needs no
+          translating and takes a corner rather than a line. */}
+      {/* Price over action in one narrow column, so the name — which
+          carries two languages — keeps the width it needs. */}
+      <span className="reward-act">
+        <span className="reward-price">{reward.cost}⭐</span>
+        {affordable ? (
+          <button
+            className="preset-btn reward-redeem"
+            onClick={onRedeem}
+            disabled={celebrating}
+          >
+            {celebrating ? <T k="redeemed" /> : <T k="redeem" />}
+          </button>
+        ) : (
+          <span className="reward-short">
+            <T k="needMoreStars" vars={{ count: short }} />
+          </span>
         )}
-      </div>
-      <div className="reward-foot">
-        <span className="reward-cost bi-inline">
-          {affordable
-            ? <T k="costStars" vars={{ count: reward.cost }} />
-            : <T k="needMoreStars" vars={{ count: short }} />}
+      </span>
+      {unlocked && (
+        <span className="reward-tools">
+          <button
+            className="reward-remove"
+            onClick={onStartEdit}
+            aria-label={tBoth('editReward', { reward: labelText(reward.label) })}
+            title={tBoth('editReward', { reward: labelText(reward.label) })}
+          >
+            ✏️
+          </button>
+          <button
+            className="reward-remove"
+            onClick={onRemove}
+            aria-label={tBoth('removeReward', { reward: labelText(reward.label) })}
+            title={tBoth('removeReward', { reward: labelText(reward.label) })}
+          >
+            ✕
+          </button>
         </span>
-        <button
-          className="preset-btn reward-redeem"
-          onClick={onRedeem}
-          disabled={!affordable || celebrating}
-        >
-          {celebrating ? <T k="redeemed" /> : <T k="redeem" />}
-        </button>
-      </div>
+      )}
     </li>
   )
 }

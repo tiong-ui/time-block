@@ -975,38 +975,28 @@ h1 .t-en {
   align-self: center;
 }
 
+/* A family can end up with a lot of rewards, so the list is built to
+   be scanned: one short row each, and as many columns as the screen
+   has room for. Kept in cost order, which reads as a ladder from what
+   a kid can have today to what they're saving towards. */
 .reward-list {
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 8px;
   width: 100%;
   margin-bottom: 14px;
 }
 
 .reward-row {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
   background: var(--card-bg);
   box-shadow: inset 0 0 0 2px var(--accent-soft);
   text-align: left;
-}
-
-.reward-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.reward-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding-left: 40px;
 }
 
 /* Within reach right now — worth making obvious from across the room. */
@@ -1016,15 +1006,61 @@ h1 .t-en {
 }
 
 .reward-emoji {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   line-height: 1;
+  flex: none;
 }
 
 .reward-name {
   flex: 1;
   min-width: 0;
   font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.2;
   color: var(--text-primary);
+}
+
+.reward-price {
+  flex: none;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.reward-affordable .reward-price {
+  color: var(--accent-soft-ink);
+}
+
+/* One slot, whichever state the reward is in, so rows line up. */
+.reward-act {
+  flex: none;
+  width: 82px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.reward-short {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: right;
+  line-height: 1.2;
+}
+
+.reward-tools {
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+
+/* Editing controls take real width, and a name broken mid-word is
+   worse than a shorter list. Managing trades a column for room. */
+.reward-list-managing {
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
 }
 
 .reward-cost {
@@ -1042,8 +1078,8 @@ h1 .t-en {
 .reward-redeem {
   flex-direction: column;
   gap: 0;
-  padding: 10px 14px;
-  font-size: 0.9rem;
+  padding: 7px 12px;
+  font-size: 0.8rem;
 }
 
 .reward-redeem:disabled {
@@ -1054,8 +1090,8 @@ h1 .t-en {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 1rem;
-  padding: 8px;
+  font-size: 0.9rem;
+  padding: 6px;
   cursor: pointer;
   border-radius: 10px;
 }
@@ -1489,4 +1525,21 @@ h1 .t-en {
 .collapse-btn:hover {
   color: var(--text-primary);
   background: var(--accent-soft);
+}
+
+/* Editing needs room, so that row steps out of the columns. */
+.reward-row:has(.add-reward-form) {
+  grid-column: 1 / -1;
+  display: block;
+  padding: 14px;
+}
+
+/* Rewards and the star log are lists, not a single focused thing, so
+   they get the width to lay out in columns instead of one long scroll. */
+.rewards-screen,
+.log-screen {
+  max-width: 960px;
+  /* A list wants its width for the list, not for margins. */
+  padding-left: 16px;
+  padding-right: 16px;
 }
