@@ -4,6 +4,10 @@
 import { starBalance, canAfford, jarStats, JAR_CAPACITY } from '../src/stars.js'
 import { groupByDay, ledgerTotals } from '../src/ledger.js'
 import { validateReward, labelToText, editedLabel, emojiChoices, REWARD_EMOJI } from '../src/rewards.js'
+import {
+  withHiit, HIIT_ACTIVITY, DEFAULT_ACTIVITIES, ACTIVITY_EMOJI,
+  validateActivity, emojiChoices as activityEmojiChoices,
+} from '../src/activities.js'
 
 let pass = 0, fail = 0
 const eq = (a, e, n) => { const ok = JSON.stringify(a) === JSON.stringify(e); ok ? pass++ : fail++
@@ -77,5 +81,22 @@ eq(emojiChoices(undefined), REWARD_EMOJI, 'a reward with no picture just gets th
 // Every starter must be representable, or editing one would show
 // nothing selected.
 eq(['📺', '🍜', '🛝', '🧸'].every(e => REWARD_EMOJI.includes(e)), true, 'every starter picture is on the list')
+
+// ── The family's focus tasks ─────────────────────────────────────────
+// Same shape as the rewards, with one thing that isn't the family's.
+eq(withHiit([]).length, 1, 'HIIT is offered even to a family with no tasks of their own')
+eq(withHiit([]).at(-1).id, 'hiit', 'and always last')
+eq(withHiit(null).at(-1).intervals, true, 'it is the one that runs work/rest rounds')
+eq(withHiit([{ id: 'a' }, { id: 'b' }]).map(a => a.id), ['a', 'b', 'hiit'], "the family's own come first, in their order")
+eq(HIIT_ACTIVITY.builtIn, true, 'and it is marked as not theirs to change')
+eq(DEFAULT_ACTIVITIES.some(a => a.id === 'hiit'), false, 'HIIT is never seeded as an editable task')
+
+eq(validateActivity({ name: '  小提琴  ' }), { ok: true, value: { label: '小提琴' } }, 'trims a typed task name')
+eq(validateActivity({ name: '   ' }).reason, 'name-missing', 'a blank name is rejected')
+eq(validateActivity({ name: 'x'.repeat(21) }).reason, 'name-too-long', 'an unreasonably long one is rejected')
+
+eq(activityEmojiChoices('📝'), ACTIVITY_EMOJI, 'a picture already on the list adds nothing')
+eq(activityEmojiChoices('🦖')[0], '🦖', 'one that is not is offered first')
+eq(DEFAULT_ACTIVITIES.every(a => ACTIVITY_EMOJI.includes(a.emoji)), true, 'every starter picture is on the list')
 
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)

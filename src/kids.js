@@ -60,10 +60,10 @@ export async function addKid(familyCode, { name, avatar }) {
 // to have; the stars are the whole point. So a failed batch falls back
 // to writing the total on its own, and reports that the log entry
 // didn't make it rather than pretending everything is fine.
-export async function addStars(familyCode, kidId, amount, { activityId, minutes, manual, note } = {}) {
+export async function addStars(familyCode, kidId, amount, { activityId, activityLabel, activityEmoji, minutes, manual, note } = {}) {
   await authReady
   const kidRef = doc(db, 'families', familyCode, 'kids', kidId)
-  const entry = earnedEntry({ stars: amount, activityId, minutes, manual, note })
+  const entry = earnedEntry({ stars: amount, activityId, activityLabel, activityEmoji, minutes, manual, note })
 
   return saveTotalEvenIfUnlogged(
     () => {

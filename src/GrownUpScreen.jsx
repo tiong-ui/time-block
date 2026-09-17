@@ -13,7 +13,7 @@ const QUICK_AMOUNTS = [5, 10, 20]
 // Sessions aren't the only way a kid earns stars — sometimes they did
 // the thing and simply forgot to start the timer. This is the way to
 // settle up, behind a PIN so it stays a grown-up's decision.
-export default function GrownUpScreen({ familyCode, kid, unlocked, onUnlock, onBack }) {
+export default function GrownUpScreen({ familyCode, kid, unlocked, onUnlock, onBack, onManageActivities }) {
   const [family, setFamily] = useState(undefined)
   const [error, setError] = useState(null)
 
@@ -33,6 +33,7 @@ export default function GrownUpScreen({ familyCode, kid, unlocked, onUnlock, onB
       error={error}
       onUnlocked={onUnlock}
       onBack={onBack}
+      onManageActivities={onManageActivities}
     />
   )
 }
@@ -40,7 +41,7 @@ export default function GrownUpScreen({ familyCode, kid, unlocked, onUnlock, onB
 // Kept apart from the family subscription above so each state of the
 // gate — loading, set a PIN, enter a PIN, unlocked — can be rendered
 // and looked at without a Firestore connection.
-export function GrownUpView({ familyCode, kid, family, unlocked, error, onUnlocked, onBack }) {
+export function GrownUpView({ familyCode, kid, family, unlocked, error, onUnlocked, onBack, onManageActivities }) {
   if (family === undefined) {
     return <Shell kid={kid} onBack={onBack}><p className="subtitle"><T k="loading" /></p></Shell>
   }
@@ -59,6 +60,11 @@ export function GrownUpView({ familyCode, kid, family, unlocked, error, onUnlock
   return (
     <Shell kid={kid} onBack={onBack}>
       <AwardForm familyCode={familyCode} kid={kid} />
+      {/* Family-wide, not this kid's — but this is where a grown-up
+          already is when they want to change it. */}
+      <button className="preset-btn wide-btn" onClick={onManageActivities}>
+        🎯 <T k="manageActivities" />
+      </button>
       <PinSetup familyCode={familyCode} changing onSaved={() => {}} />
     </Shell>
   )

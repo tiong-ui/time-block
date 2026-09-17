@@ -18,7 +18,7 @@ import { loadSessions, loadLastKid } from './session.js'
 // kid one tap away. A card that is counting down or waiting for its
 // stars never folds: it has to stay where it can be seen.
 export default function FocusBoard({
-  familyCode, kids, kidsLoaded, loadError,
+  familyCode, kids, activities, kidsLoaded, loadError,
   colorTheme, onColorThemeChange,
   onViewStarJar, onEditAvatar, onAddKid,
 }) {
@@ -90,6 +90,7 @@ export default function FocusBoard({
             key={kid.id}
             familyCode={familyCode}
             kid={kid}
+            activities={activities}
             restored={restored[kid.id] ?? null}
             collapsed={isCollapsed(kid)}
             onToggle={() => toggle(kid.id)}

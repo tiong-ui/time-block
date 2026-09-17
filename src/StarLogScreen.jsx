@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ACTIVITIES } from './activities.js'
+
 import { watchLedger, groupByDay, ledgerTotals } from './ledger.js'
 import { errorDetail } from './errorMessage.js'
 import { tBoth } from './i18n.js'
@@ -100,21 +100,20 @@ function StarLogBody({ entries, error }) {
 
 function LogRow({ entry }) {
   const spent = entry.kind === 'spent'
-  const activity = ACTIVITIES.find(a => a.id === entry.activityId) ?? null
   const time = new Date(entry.atMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
 
   return (
     <li className={`log-row${spent ? ' log-row-spent' : ''}`}>
       <span className="log-emoji" aria-hidden="true">
-        {spent ? (entry.rewardEmoji ?? '🎁') : entry.manual ? '🙌' : (activity?.emoji ?? '🎯')}
+        {spent ? (entry.rewardEmoji ?? '🎁') : entry.manual ? '🙌' : (entry.activityEmoji ?? '🎯')}
       </span>
       <span className="log-what">
         {spent
           ? <Label value={entry.rewardLabel} />
           : entry.manual
             ? (entry.note ? <Label value={entry.note} /> : <T k="manualStar" />)
-            : activity
-              ? <Label value={activity.label} />
+            : entry.activityLabel
+              ? <Label value={entry.activityLabel} />
               : <T k="justFocus" />}
         {/* Time and length as one short line. A stacked bilingual
             "20 minutes of focus" wrapped and doubled every row's height

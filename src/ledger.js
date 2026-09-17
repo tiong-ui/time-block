@@ -30,11 +30,16 @@ export function newLedgerEntry(familyCode, kidId) {
 // `manual` marks stars a grown-up added by hand rather than ones a
 // finished session paid out — worth telling apart when reading the log
 // back, so "where did these 20 come from?" has an answer.
-export function earnedEntry({ stars, activityId, minutes, manual, note }) {
+export function earnedEntry({ stars, activityId, activityLabel, activityEmoji, minutes, manual, note }) {
   return {
     kind: 'earned',
     stars,
     activityId: activityId ?? null,
+    // The label is written down as well as the id, because the family
+    // owns the activity list: dropping "piano" from it shouldn't
+    // quietly rewrite every piano session in the history as untagged.
+    activityLabel: activityLabel ?? null,
+    activityEmoji: activityEmoji ?? null,
     minutes: minutes ?? null,
     manual: Boolean(manual),
     note: note || null,

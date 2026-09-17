@@ -4,6 +4,7 @@ import { errorDetail } from './errorMessage.js'
 import { tBoth } from './i18n.js'
 import { loadStoredFamilyCode, storeFamilyCode } from './family.js'
 import { watchKids, addKid, updateKidAvatar } from './kids.js'
+import { watchActivities } from './activities.js'
 import FamilySetupScreen from './FamilySetupScreen.jsx'
 import KidPickerScreen from './KidPickerScreen.jsx'
 import FocusBoard from './FocusBoard.jsx'
@@ -12,6 +13,7 @@ import StarLogScreen from './StarLogScreen.jsx'
 import RewardsScreen from './RewardsScreen.jsx'
 import GrownUpScreen from './GrownUpScreen.jsx'
 import EditAvatarScreen from './EditAvatarScreen.jsx'
+import ActivitiesScreen from './ActivitiesScreen.jsx'
 import './App.css'
 
 // Navigation and the family's data — nothing about any one timer.
@@ -37,6 +39,8 @@ export default function App() {
   const [kids, setKids] = useState([])
   const [kidsLoaded, setKidsLoaded] = useState(false)
   const [kidsError, setKidsError] = useState('')
+  // The family's focus tasks, watched once here rather than per card.
+  const [activities, setActivities] = useState([])
   const [colorTheme, setColorTheme] = useState(loadStoredTheme)
   // Whose star screens are open. Unrelated to who is focusing — every
   // kid on the board can be doing that at once.
@@ -67,6 +71,13 @@ export default function App() {
         setKidsError(tBoth('errLoadKids', { detail: errorDetail(err) }))
         setStage(prev => (prev === 'loading-kids' ? 'board' : prev))
       },
+    )
+  }, [familyCode])
+
+  useEffect(() => {
+    if (!familyCode) return undefined
+    return watchActivities(familyCode, setActivities, err =>
+      console.error('Failed to load focus tasks:', err),
     )
   }, [familyCode])
 
@@ -165,7 +176,16 @@ export default function App() {
             unlocked={grownUpUnlocked}
             onUnlock={() => setGrownUpUnlocked(true)}
             onBack={() => setStage('starjar')}
+            onManageActivities={() => setStage('activities')}
           />
+        </div>
+      )
+    }
+
+    if (stage === 'activities') {
+      return (
+        <div className="app">
+          <ActivitiesScreen familyCode={familyCode} onBack={() => setStage('grownup')} />
         </div>
       )
     }
@@ -198,6 +218,7 @@ export default function App() {
       <FocusBoard
         familyCode={familyCode}
         kids={kids}
+        activities={activities}
         kidsLoaded={kidsLoaded}
         loadError={kidsError}
         colorTheme={colorTheme}

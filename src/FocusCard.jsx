@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { PRESETS } from './presets'
-import { ACTIVITIES, ACTIVITY_STORAGE_KEY } from './activities'
+import { ACTIVITY_STORAGE_KEY, withHiit } from './activities.js'
 import {
   HIIT_ACTIVITY_ID,
   EXERCISE_OPTIONS,
@@ -18,7 +18,7 @@ import { STARS_PER_SESSION, starBalance } from './stars.js'
 import { addStars } from './kids.js'
 import { errorDetail } from './errorMessage.js'
 import { tBoth } from './i18n.js'
-import { T } from './T.jsx'
+import { T, Label } from './T.jsx'
 import JarDropAnimation from './JarDropAnimation.jsx'
 import PieTimer from './PieTimer'
 import { playIntervalCue, scheduleAlarm, scheduleIntervalCues } from './chime'
@@ -43,17 +43,18 @@ function formatTime(ms) {
 
 function loadStoredActivity(kidId) {
   try {
-    const stored = localStorage.getItem(perKidKey(ACTIVITY_STORAGE_KEY, kidId))
-    return ACTIVITIES.some(a => a.id === stored) ? stored : null
+    return localStorage.getItem(perKidKey(ACTIVITY_STORAGE_KEY, kidId))
   } catch {
     return null
   }
 }
 
 export default function FocusCard({
-  familyCode, kid, restored, collapsed, onToggle, onActiveChange,
+  familyCode, kid, activities, restored, collapsed, onToggle, onActiveChange,
   onViewStarJar, onEditAvatar,
 }) {
+  // The family's own list, plus HIIT, which is built in.
+  const choices = withHiit(activities)
   const kidId = kid.id
 
   // Restoring happens as this card's opening state rather than in an
@@ -82,7 +83,8 @@ export default function FocusCard({
   const [alarmRinging, setAlarmRinging] = useState(false)
   const [starsError, setStarsError] = useState(null)
 
-  const activity = ACTIVITIES.find(a => a.id === activityId) ?? null
+  // A remembered pick can name something a grown-up has since removed.
+  const activity = choices.find(a => a.id === activityId) ?? null
   const isHiit = activityId === HIIT_ACTIVITY_ID
 
   useEffect(() => {
@@ -103,6 +105,7 @@ export default function FocusCard({
   const exerciseSecRef = useRef(exerciseSec)
   const restSecRef = useRef(restSec)
   const activityIdRef = useRef(activityId)
+  const activityRef = useRef(activity)
   const totalMsRef = useRef(totalMs)
   const kidRef = useRef(kid)
   useEffect(() => {
@@ -110,9 +113,10 @@ export default function FocusCard({
     exerciseSecRef.current = exerciseSec
     restSecRef.current = restSec
     activityIdRef.current = activityId
+    activityRef.current = activity
     totalMsRef.current = totalMs
     kidRef.current = kid
-  }, [isHiit, exerciseSec, restSec, activityId, totalMs, kid])
+  }, [isHiit, exerciseSec, restSec, activityId, activity, totalMs, kid])
 
   // Wall-clock bookkeeping, so the countdown stays accurate even if the
   // tab is backgrounded and rAF gets throttled.
@@ -251,6 +255,8 @@ export default function FocusCard({
     if (!familyCode) return
     addStars(familyCode, kidId, STARS_PER_SESSION, {
       activityId: activityIdRef.current,
+      activityLabel: activityRef.current?.label ?? null,
+      activityEmoji: activityRef.current?.emoji ?? null,
       minutes: Math.round(totalMsRef.current / 60000),
     })
       .then(result => {
@@ -380,6 +386,7 @@ export default function FocusCard({
       {phase === 'select' && (
         <SelectBody
           activityId={activityId}
+          activities={choices}
           onActivityChange={setActivityId}
           isHiit={isHiit}
           exerciseSec={exerciseSec}
@@ -455,13 +462,13 @@ function KidHeader({ kid, phase, onToggle, onViewStarJar, onEditAvatar }) {
 }
 
 function SelectBody({
-  activityId, onActivityChange, isHiit,
+  activityId, activities, onActivityChange, isHiit,
   exerciseSec, onExerciseSecChange, restSec, onRestSecChange, onSelect,
 }) {
   return (
     <div className="card-body select-body">
       <p className="subtitle"><T k="whatFocusingOn" /></p>
-      <ActivityPicker value={activityId} onChange={onActivityChange} />
+      <ActivityPicker options={activities} value={activityId} onChange={onActivityChange} />
       {isHiit && (
         <div className="hiit-setup">
           <SecondsRow
@@ -512,10 +519,10 @@ function SecondsRow({ labelKey, options, value, onChange }) {
   )
 }
 
-function ActivityPicker({ value, onChange }) {
+function ActivityPicker({ options, value, onChange }) {
   return (
     <div className="activity-picker" role="radiogroup" aria-label={tBoth('activityLabel')}>
-      {ACTIVITIES.map(activity => (
+      {options.map(activity => (
         <button
           key={activity.id}
           className={`activity-chip${value === activity.id ? ' active' : ''}`}
@@ -524,10 +531,7 @@ function ActivityPicker({ value, onChange }) {
           onClick={() => onChange(value === activity.id ? null : activity.id)}
         >
           <span className="activity-emoji" aria-hidden="true">{activity.emoji}</span>
-          <span className="activity-label">
-            <span className="t-zh" lang="zh-Hant">{activity.label.zh}</span>
-            <span className="t-en" lang="en">{activity.label.en}</span>
-          </span>
+          <span className="activity-label"><Label value={activity.label} /></span>
         </button>
       ))}
     </div>
@@ -575,8 +579,7 @@ function RunningBody({
       {activity && (
         <p className="activity-tag">
           <span aria-hidden="true">{activity.emoji}</span>{' '}
-          <span className="t-zh" lang="zh-Hant">{activity.label.zh}</span>
-          <span className="t-en" lang="en">{activity.label.en}</span>
+          <Label value={activity.label} />
         </p>
       )}
       <div
