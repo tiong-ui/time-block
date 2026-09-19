@@ -35,6 +35,10 @@ import { holdScreenAwake } from './wakeLock.js'
 // session — so nothing here is shared, and every handle is held rather
 // than looked up.
 
+// How often a running card redraws. See the countdown loop below for
+// why this is nowhere near a frame rate.
+const TICK_MS = 100
+
 function formatTime(ms) {
   const totalSeconds = Math.ceil(ms / 1000)
   const minutes = Math.floor(totalSeconds / 60)
@@ -124,7 +128,6 @@ export default function FocusCard({
   const startedAtRef = useRef(restoredSession?.startedAt ?? 0)
   const endAtRef = useRef(restoredSession?.endAt ?? 0)
   const pausedAtRef = useRef(restoredSession?.pausedAt ?? 0)
-  const rafRef = useRef(null)
   const cancelCuesRef = useRef(null)
   // This card's own alarm handle. Stopping it silences this kid's
   // finish and nobody else's.
@@ -301,6 +304,20 @@ export default function FocusCard({
 
   // Countdown loop. One per card, armed only while that card is
   // running, so a paused kid costs nothing and a stopped one stops.
+  //
+  // Ten times a second, not every frame. The dial drains over ten to
+  // thirty minutes and the peeked readout only changes once a second,
+  // so sixty was redrawing the same picture — and with three kids
+  // going at once that was a hundred and eighty repaints a second on a
+  // screen the wake lock is now holding open. The fastest thing here
+  // is a twenty-second HIIT round, which at this rate still moves less
+  // than two degrees a step.
+  //
+  // None of this touches accuracy: every value is read from the
+  // wall clock, so a slower or jittery tick only means the picture
+  // catches up a fraction of a second later. The alarm doesn't wait
+  // for it at all — that was booked on the audio clock when the
+  // session started.
   useEffect(() => {
     if (phase !== 'running' || paused) return undefined
 
@@ -329,13 +346,12 @@ export default function FocusCard({
         // began, so there's nothing to start here — and nothing to
         // cancel either.
         finishSession()
-        return
+        clearInterval(id)
       }
-      rafRef.current = requestAnimationFrame(tick)
     }
 
-    rafRef.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafRef.current)
+    const id = setInterval(tick, TICK_MS)
+    return () => clearInterval(id)
     // finishSession is redefined every render but only touches refs and
     // setters, so re-arming the loop for it would restart the frame
     // callback for no reason.
