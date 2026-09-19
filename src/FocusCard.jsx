@@ -23,6 +23,7 @@ import JarDropAnimation from './JarDropAnimation.jsx'
 import PieTimer from './PieTimer'
 import { playIntervalCue, scheduleAlarm, scheduleIntervalCues } from './chime'
 import { saveSession, clearSession, restoredTimerState, storeLastKid } from './session.js'
+import { holdScreenAwake } from './wakeLock.js'
 
 // One kid's focus session, start to finish, owning everything it needs:
 // its own countdown, its own HIIT cycle, its own booked audio, its own
@@ -287,6 +288,16 @@ export default function FocusCard({
     // awardStars only reads refs and setters.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // While this card is counting down, ask the screen to stay awake.
+  // On an iPad that's what keeps the finishing alarm audible at all:
+  // once the device locks, Safari suspends the audio and nothing that
+  // was booked ever sounds. Paused doesn't count — nothing is going to
+  // go off — and the hold is dropped the moment the card stops.
+  useEffect(() => {
+    if (phase !== 'running' || paused) return undefined
+    return holdScreenAwake()
+  }, [phase, paused])
 
   // Countdown loop. One per card, armed only while that card is
   // running, so a paused kid costs nothing and a stopped one stops.
