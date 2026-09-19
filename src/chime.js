@@ -263,13 +263,21 @@ export function playChime(tuneIndex) {
 // that runs out while they've wandered off still gets noticed.
 //
 // It's booked on the Web Audio clock rather than fired from a timer,
-// because that clock keeps running while the tab is hidden — the alarm
-// still sounds with the phone face-down or the screen off. Since an
-// endless loop can't all be booked up front, repeats are scheduled a
-// long way ahead and topped up periodically. The lookahead is far
-// wider than the top-up interval on purpose: browsers throttle timers
-// in hidden tabs to about once a minute, so the booked repeats have to
-// cover that gap on their own.
+// because that clock keeps running under a hidden tab — so on a
+// desktop browser the alarm still sounds with the window behind
+// something else. Since an endless loop can't all be booked up front,
+// repeats are scheduled a long way ahead and topped up periodically.
+// The lookahead is far wider than the top-up interval on purpose:
+// browsers throttle timers in hidden tabs to about once a minute, so
+// the booked repeats have to cover that gap on their own.
+//
+// iOS and iPadOS are the exception, and it's worth being straight
+// about it: Safari suspends the audio context outright when the device
+// locks or the app is backgrounded, so nothing booked here sounds. No
+// amount of scheduling fixes that — a web page can't reserve an alarm
+// slot the way a native app can. What the app does instead is hold a
+// screen wake lock while a timer runs (see wakeLock.js), so the iPad
+// doesn't reach that state on its own.
 
 const ALARM_GAP_SEC = 0.9
 const ALARM_LOOKAHEAD_SEC = 150
