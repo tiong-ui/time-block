@@ -65,8 +65,44 @@ export function GrownUpView({ familyCode, kid, family, unlocked, error, onUnlock
       <button className="preset-btn wide-btn" onClick={onManageActivities}>
         🎯 <T k="manageActivities" />
       </button>
+      <FamilyCode code={familyCode} />
       <PinSetup familyCode={familyCode} changing onSaved={() => {}} />
     </Shell>
+  )
+}
+
+// The code that links every device to this family. Kept behind the
+// PIN, because handing it to someone is handing them everything —
+// and shown here because this is where a parent is when they want to
+// put the app on another device.
+function FamilyCode({ code }) {
+  const [copied, setCopied] = useState(false)
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+    } catch {
+      // No clipboard (older browser, insecure context) — the code is
+      // on screen to be typed, which is how it gets used anyway.
+    }
+  }
+
+  useEffect(() => {
+    if (!copied) return undefined
+    const timer = setTimeout(() => setCopied(false), 2000)
+    return () => clearTimeout(timer)
+  }, [copied])
+
+  return (
+    <div className="family-code-card">
+      <p className="confirm-title"><T k="yourFamilyCode" /></p>
+      <p className="family-code-display">{code}</p>
+      <p className="confirm-body"><T k="familyCodeWhy" /></p>
+      <button className="preset-btn wide-btn" type="button" onClick={copy}>
+        <T k={copied ? 'codeCopied' : 'copyCode'} />
+      </button>
+    </div>
   )
 }
 

@@ -111,6 +111,12 @@ export const STRINGS = {
   rewardCostNeeded: { zh: '星星數要是大於 0 的整數', en: 'Star cost must be a whole number above 0' },
   spendable: { zh: '可以用', en: 'To spend' },
 
+  // Family code
+  yourFamilyCode: { zh: '家庭代碼', en: 'Family code' },
+  familyCodeWhy: { zh: '在其他裝置輸入這個代碼，就會看到同一家人的星星。', en: 'Enter this on another device to see the same family.' },
+  copyCode: { zh: '複製', en: 'Copy' },
+  codeCopied: { zh: '已複製！', en: 'Copied!' },
+
   // Focus tasks
   manageActivities: { zh: '專心項目', en: 'Focus Tasks' },
   manageActivitiesWhy: { zh: '孩子開始計時前可以選的項目', en: 'What kids can pick before a timer starts' },
