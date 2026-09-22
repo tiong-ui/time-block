@@ -1,0 +1,41 @@
+<!-- The app's own screen, shrunk: the pie timer draining clockwise from
+     twelve, with a star at its pivot for what the focus earns.
+
+     Full-bleed and square on purpose — iOS rounds the corners itself and
+     Android crops to its own shape, so nothing here relies on a corner
+     surviving. The artwork stays inside the middle 65%, which is the
+     safe circle every masking platform promises to keep. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="專注時間 Focus Time">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8f95ff"/>
+      <stop offset="1" stop-color="#5a61e0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.24" cy="0.18" r="0.72">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wedge" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffcf52"/>
+      <stop offset="1" stop-color="#ff9a26"/>
+    </linearGradient>
+    <filter id="lift" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#23255c" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#tile)"/>
+  <rect width="512" height="512" fill="url(#glow)"/>
+
+  <g filter="url(#lift)">
+    <circle cx="256" cy="256" r="178" fill="#ffffff"/>
+  </g>
+  <!-- 70% of the time still to go: the wedge sweeps from twelve o'clock
+       clockwise, leaving the gap in the upper left, exactly as the timer
+       in the app does. -->
+  <path d="M 256 256 L 256 78 A 178 178 0 1 1 86.71 311.01 Z" fill="url(#wedge)"/>
+
+  <path
+    d="M 256.00 186.00 L 273.30 226.18 L 316.87 230.22 L 284.00 259.10 L 293.62 301.78 L 256.00 279.44 L 218.38 301.78 L 228.00 259.10 L 195.13 230.22 L 238.70 226.18 Z"
+    fill="#4c52cf" stroke="#4c52cf" stroke-width="12" stroke-linejoin="round"/>
+</svg>

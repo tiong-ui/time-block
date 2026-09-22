@@ -2,9 +2,25 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>🎯 專注時間 Focus Time</title>
+
+    <!-- The tab icon can be the SVG; the home screen can't. iOS only
+         takes a PNG here, and without one it photographs the page
+         instead, which is why adding this to a home screen used to give
+         you a screenshot of the emoji. -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Opens without the address bar once it's on the home screen, so a
+         kid mid-session has nowhere to wander off to. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="專注時間" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#eef1ff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#14141f" />
   </head>
   <body>
     <div id="root"></div>
