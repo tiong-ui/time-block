@@ -18,6 +18,7 @@ import { errorDetail } from './errorMessage.js'
 import { tBoth } from './i18n.js'
 import { T, Label } from './T.jsx'
 import { PinGate, PinSetup } from './PinGate.jsx'
+import BackBar from './BackBar.jsx'
 import EmojiGrid from './EmojiGrid.jsx'
 
 // What the stars are for. Redeeming is the kid's to do; the list
@@ -150,6 +151,7 @@ export function RewardsView({
 
   return (
     <div className="screen rewards-screen">
+      <BackBar onBack={onBack} />
       <div className="hero-icon" aria-hidden="true">🎁</div>
       <h1><T k="rewardsTitle" vars={{ name: kid.name }} /></h1>
       <p className="subtitle"><T k="youHaveStars" vars={{ count: balance }} /></p>
@@ -214,7 +216,6 @@ export function RewardsView({
         />
       )}
 
-      <button className="text-btn" onClick={onBack}><T k="back" /></button>
     </div>
   )
 }

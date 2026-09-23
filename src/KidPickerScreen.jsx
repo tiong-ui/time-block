@@ -4,6 +4,7 @@ import EmojiGrid from './EmojiGrid.jsx'
 import { errorDetail } from './errorMessage.js'
 import { T } from './T.jsx'
 import { tBoth, tZh } from './i18n.js'
+import BackBar from './BackBar.jsx'
 
 // Adding a kid to the family. `addOnly` skips the who's-here list —
 // the board already shows everyone, so getting here is always about
@@ -46,6 +47,9 @@ export default function KidPickerScreen({ kids, kidsLoaded, loadError, addOnly, 
   if (adding || (kidsLoaded && kids.length === 0)) {
     return (
       <div className="screen">
+        {/* No way back out of the very first kid: a family with nobody
+            in it has nothing to go back to. */}
+        {kids.length > 0 && <BackBar onBack={() => (addOnly ? onBack() : setAdding(false))} />}
         <div className="hero-icon" aria-hidden="true">{avatar}</div>
         <h1><T k="addAKid" /></h1>
         <p className="subtitle"><T k="nameAndAvatar" /></p>
@@ -65,15 +69,6 @@ export default function KidPickerScreen({ kids, kidsLoaded, loadError, addOnly, 
           <button className="preset-btn wide-btn" type="submit" disabled={busy || !name.trim()}>
             <T k={busy ? 'adding' : 'add'} />
           </button>
-          {kids.length > 0 && (
-            <button
-              type="button"
-              className="text-btn"
-              onClick={() => (addOnly ? onBack() : setAdding(false))}
-            >
-              <T k="back" />
-            </button>
-          )}
         </form>
       </div>
     )

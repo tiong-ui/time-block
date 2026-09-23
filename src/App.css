@@ -163,7 +163,12 @@ body {
   max-width: 420px;
   background: var(--card-bg);
   border-radius: 28px;
-  padding: 40px 28px;
+  /* Named so the back bar can pull itself back out to the card's edges
+     without guessing — screens that set their own padding change these
+     two rather than the shorthand. */
+  --screen-pad-x: 28px;
+  --screen-pad-y: 40px;
+  padding: var(--screen-pad-y) var(--screen-pad-x);
   box-shadow: 0 12px 40px var(--shadow);
   display: flex;
   flex-direction: column;
@@ -823,7 +828,9 @@ h1 .t-en {
 /* ── Responsive ── */
 @media (max-width: 480px) {
   .screen {
-    padding: 32px 20px;
+    --screen-pad-x: 20px;
+    --screen-pad-y: 32px;
+    padding: var(--screen-pad-y) var(--screen-pad-x);
     border-radius: 22px;
   }
 
@@ -1558,8 +1565,7 @@ h1 .t-en {
 .log-screen {
   max-width: 960px;
   /* A list wants its width for the list, not for margins. */
-  padding-left: 16px;
-  padding-right: 16px;
+  --screen-pad-x: 16px;
 }
 
 /* HIIT sits in the list so its absence doesn't look like a bug, but
@@ -1597,4 +1603,57 @@ h1 .t-en {
 
 .family-code-card .confirm-body {
   text-align: center;
+}
+
+/* ── Back bar ──
+   Sticks to the top of the card while the screen scrolls, so a long
+   star log or reward list never buries the way out. The negative
+   margins pull it out to the card's edges: a sticky strip has to be
+   opaque across the full width, or rows scroll through the padding
+   beside it. */
+.back-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  align-self: stretch;
+  margin: calc(-1 * var(--screen-pad-y)) calc(-1 * var(--screen-pad-x)) 2px;
+  padding: 14px var(--screen-pad-x) 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 28px 28px 0 0;
+  background: var(--card-bg);
+  /* A hairline rather than a border, so the edge content slides under
+     costs the bar no height. */
+  box-shadow: 0 1px 0 var(--shadow);
+  color: var(--accent-soft-ink);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.back-bar .t-zh,
+.back-bar .t-en {
+  display: inline;
+}
+
+.back-bar .t-en {
+  margin-left: 4px;
+}
+
+.back-bar-arrow {
+  font-size: 1.3em;
+  line-height: 1;
+}
+
+.back-bar:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.back-bar:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
