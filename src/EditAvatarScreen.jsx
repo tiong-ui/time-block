@@ -3,6 +3,7 @@ import EmojiGrid from './EmojiGrid.jsx'
 import { errorDetail } from './errorMessage.js'
 import { T } from './T.jsx'
 import { tBoth } from './i18n.js'
+import BackBar from './BackBar.jsx'
 
 // Lets a kid pick a new avatar for their existing profile. Saves as
 // soon as a new one is tapped — no separate confirm step, matching
@@ -28,14 +29,12 @@ export default function EditAvatarScreen({ kid, onSave, onBack }) {
 
   return (
     <div className="screen">
+      <BackBar onBack={onBack} disabled={busy} />
       <div className="hero-icon" aria-hidden="true">{avatar}</div>
       <h1><T k="avatarTitle" vars={{ name: kid.name }} /></h1>
       <p className="subtitle"><T k="pickNewAvatar" /></p>
       <EmojiGrid value={avatar} onChange={handlePick} />
       {error && <p className="form-error">{error}</p>}
-      <button className="text-btn" onClick={onBack} disabled={busy}>
-        <T k="back" />
-      </button>
     </div>
   )
 }

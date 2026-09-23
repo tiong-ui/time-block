@@ -5,6 +5,7 @@ import { errorDetail } from './errorMessage.js'
 import { tBoth } from './i18n.js'
 import { T, Label } from './T.jsx'
 import StarCalendar from './StarCalendar.jsx'
+import BackBar from './BackBar.jsx'
 
 // Where the stars came from and where they went. A running total says
 // how many; only this says when, and what the kid was doing at the time.
@@ -22,6 +23,7 @@ export default function StarLogScreen({ familyCode, kid, onBack }) {
 
   return (
     <div className="screen log-screen">
+      <BackBar onBack={onBack} />
       <div className="hero-icon" aria-hidden="true">{kid.avatar}</div>
       <h1><T k="starLogTitle" vars={{ name: kid.name }} /></h1>
       <div className="view-switch">
@@ -41,7 +43,6 @@ export default function StarLogScreen({ familyCode, kid, onBack }) {
       {view === 'list'
         ? <StarLogBody entries={entries} error={error} />
         : <StarCalendar familyCode={familyCode} kid={kid} />}
-      <button className="text-btn" onClick={onBack}><T k="back" /></button>
     </div>
   )
 }
@@ -52,10 +53,10 @@ export default function StarLogScreen({ familyCode, kid, onBack }) {
 export function StarLogView({ kid, entries, error, onBack }) {
   return (
     <div className="screen log-screen">
+      <BackBar onBack={onBack} />
       <div className="hero-icon" aria-hidden="true">{kid.avatar}</div>
       <h1><T k="starLogTitle" vars={{ name: kid.name }} /></h1>
       <StarLogBody entries={entries} error={error} />
-      <button className="text-btn" onClick={onBack}><T k="back" /></button>
     </div>
   )
 }

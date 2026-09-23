@@ -7,6 +7,7 @@ import { errorDetail } from './errorMessage.js'
 import { tBoth } from './i18n.js'
 import { T } from './T.jsx'
 import { PinGate, PinSetup } from './PinGate.jsx'
+import BackBar from './BackBar.jsx'
 
 const QUICK_AMOUNTS = [5, 10, 20]
 
@@ -109,10 +110,10 @@ function FamilyCode({ code }) {
 function Shell({ kid, onBack, children }) {
   return (
     <div className="screen grownup-screen">
+      <BackBar onBack={onBack} />
       <div className="hero-icon" aria-hidden="true">🔑</div>
       <h1><T k="grownUpTitle" vars={{ name: kid.name }} /></h1>
       {children}
-      <button className="text-btn" onClick={onBack}><T k="back" /></button>
     </div>
   )
 }

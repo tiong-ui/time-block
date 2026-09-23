@@ -16,6 +16,7 @@ import {
 import { errorDetail } from './errorMessage.js'
 import { tBoth, tZh, tEn } from './i18n.js'
 import { T, Label } from './T.jsx'
+import BackBar from './BackBar.jsx'
 import EmojiGrid from './EmojiGrid.jsx'
 
 // The family's focus tasks, kept behind the grown-up PIN like the
@@ -72,6 +73,7 @@ export function ActivitiesView({ activities, error, onAdd, onEdit, onRemove, onB
 
   return (
     <div className="screen rewards-screen">
+      <BackBar onBack={onBack} />
       <div className="hero-icon" aria-hidden="true">🎯</div>
       <h1><T k="manageActivities" /></h1>
       <p className="subtitle"><T k="manageActivitiesWhy" /></p>
@@ -140,7 +142,6 @@ export function ActivitiesView({ activities, error, onAdd, onEdit, onRemove, onB
             <T k="addActivity" />
           </button>}
 
-      <button className="text-btn" onClick={onBack}><T k="back" /></button>
     </div>
   )
 }

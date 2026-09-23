@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { JAR_CAPACITY, jarStats, starBalance } from './stars.js'
 import PhysicsJar from './PhysicsJar.jsx'
 import { T } from './T.jsx'
+import BackBar from './BackBar.jsx'
 
 // A kid's progress at a glance, and the way in to the two things they
 // can do with stars: look back at how they earned them, or spend them.
@@ -18,6 +19,7 @@ export default function StarJarScreen({ kid, onBack, onViewLog, onViewRewards, o
 
   return (
     <div className="screen">
+      <BackBar onBack={onBack} />
       <div className="hero-icon" aria-hidden="true">{kid.avatar}</div>
       <h1><T k="starJarTitle" vars={{ name: kid.name }} /></h1>
       <div className="jar-stats-row">
@@ -55,9 +57,6 @@ export default function StarJarScreen({ kid, onBack, onViewLog, onViewRewards, o
           🔑 <T k="grownUp" />
         </button>
       </div>
-      <button className="text-btn" onClick={onBack}>
-        <T k="back" />
-      </button>
     </div>
   )
 }
