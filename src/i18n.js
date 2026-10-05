@@ -173,9 +173,13 @@ export const STRINGS = {
   adding: { zh: '新增中…', en: 'Adding…' },
   addAnotherKid: { zh: '＋ 新增另一個小孩', en: '+ Add another kid' },
   switchKid: { zh: '換人', en: 'Switch' },
-  avatarTitle: { zh: '{name}的頭像', en: "{name}'s Avatar" },
+  editKidTitle: { zh: '{name}的資料', en: "{name}'s Profile" },
+  theirName: { zh: '名字', en: 'Name' },
   pickNewAvatar: { zh: '選一個新的頭像', en: 'Pick a new one' },
-  changeAvatarOf: { zh: '更換{name}的頭像', en: "Change {name}'s avatar" },
+  editKidOf: { zh: '更改{name}的名字和頭像', en: "Change {name}'s name and avatar" },
+  savingName: { zh: '儲存中…', en: 'Saving…' },
+  nameSaved: { zh: '改好了！', en: 'Saved!' },
+  nameNeeded: { zh: '要有個名字才行', en: 'A name is needed' },
 
   // Family setup
   setUpStarJar: { zh: '幫孩子建立星星罐，專心就能收集星星。', en: 'Set up a Star Jar your kids can fill as they focus.' },
@@ -214,6 +218,7 @@ export const STRINGS = {
   errAddReward: { zh: '新增獎勵失敗{detail}，請再試一次。', en: "Couldn't add that reward{detail}. Please try again." },
   errLoadKids: { zh: '無法載入小孩的資料。{detail}請檢查網路後再試一次。', en: "Couldn't load your kids' profiles.{detail} Check your connection and try again." },
   errSaveAvatar: { zh: '目前無法儲存。{detail}請檢查網路後再試一次。', en: "Couldn't save that right now.{detail} Check your connection and try again." },
+  errSaveName: { zh: '名字目前存不起來。{detail}請檢查網路後再試一次。', en: "Couldn't save the name right now.{detail} Check your connection and try again." },
 }
 
 // A placeholder value can itself be bilingual ({ zh, en }) — an

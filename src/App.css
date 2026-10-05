@@ -1674,3 +1674,46 @@ h1 .t-en {
   color-scheme: light dark;
   text-align: center;
 }
+
+/* ── Editing a kid ──
+   The name and its save button on one line, so the button reads as
+   belonging to the field rather than to the screen. */
+.edit-name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.edit-name-form .subtitle {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.edit-name-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.edit-name-row .text-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The preset buttons elsewhere are tall tiles; beside a text field
+   this one only needs to be as tall as the field, which the row's
+   stretch already gives it. (bi-inline is no use here: .preset-btn is
+   a flex container, so it blockifies its children whatever they ask
+   for.) */
+.edit-name-row .preset-btn {
+  flex: 0 0 auto;
+  padding: 0 18px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.edit-kid-avatar-label {
+  margin-bottom: 0;
+}

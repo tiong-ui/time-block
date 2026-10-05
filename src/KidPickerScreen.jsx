@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AVATARS } from './avatars.js'
+import { validateKidName, MAX_KID_NAME_LENGTH } from './kids.js'
 import EmojiGrid from './EmojiGrid.jsx'
 import { errorDetail } from './errorMessage.js'
 import { T } from './T.jsx'
@@ -18,12 +19,12 @@ export default function KidPickerScreen({ kids, kidsLoaded, loadError, addOnly, 
 
   async function handleAdd(e) {
     e.preventDefault()
-    const trimmed = name.trim()
-    if (!trimmed) return
+    const checked = validateKidName(name)
+    if (!checked.ok) return
     setBusy(true)
     setError('')
     try {
-      await onAddKid({ name: trimmed, avatar })
+      await onAddKid({ name: checked.value, avatar })
     } catch (err) {
       console.error('Failed to add kid:', err)
       setError(tBoth('errAddKid', { detail: errorDetail(err) }))
@@ -62,7 +63,7 @@ export default function KidPickerScreen({ kids, kidsLoaded, loadError, addOnly, 
             onChange={e => setName(e.target.value)}
             placeholder={tZh('namePlaceholder')}
             autoComplete="off"
-            maxLength={20}
+            maxLength={MAX_KID_NAME_LENGTH}
           />
           <EmojiGrid value={avatar} onChange={setAvatar} />
           {error && <p className="form-error">{error}</p>}

@@ -120,3 +120,22 @@ export async function updateKidAvatar(familyCode, kidId, avatar) {
   const ref = doc(db, 'families', familyCode, 'kids', kidId)
   await updateDoc(ref, { avatar })
 }
+
+// Names get typed wrong, kids change what they want to be called, and
+// a family that started with "Kid 1" shouldn't be stuck with it.
+export async function renameKid(familyCode, kidId, name) {
+  await authReady
+  const ref = doc(db, 'families', familyCode, 'kids', kidId)
+  await updateDoc(ref, { name })
+}
+
+// A name is a name: the same rule wherever one is typed, so adding a
+// kid and renaming one can't disagree about what counts.
+export const MAX_KID_NAME_LENGTH = 20
+
+export function validateKidName(name) {
+  const trimmed = (name ?? '').trim()
+  if (!trimmed) return { ok: false, reason: 'empty' }
+  if (trimmed.length > MAX_KID_NAME_LENGTH) return { ok: false, reason: 'too-long' }
+  return { ok: true, value: trimmed }
+}
