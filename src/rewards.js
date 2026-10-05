@@ -30,19 +30,38 @@ export const DEFAULT_REWARDS = [
 // What a reward can look like. Broad enough to cover the usual family
 // bribes — treats, outings, screen time, things to keep — without
 // becoming a full emoji keyboard to scroll through on a phone.
-export const REWARD_EMOJI = [
-  '🎁', '📺', '🎮', '🍦', '🍕', '🍜',
-  '🍭', '🧁', '🛝', '🎢', '⚽', '🚲',
-  '🏊', '🎬', '📚', '🎨', '🧸', '🐶',
-  '🎈', '💤', '🛒', '🎪', '🎤', '🚗',
+// Grouped the way a family thinks about a treat — something to eat,
+// something to do, somewhere to go — so a longer list stays browsable.
+// Not a limit: the picker also takes anything the device's own emoji
+// keyboard can produce.
+export const REWARD_EMOJI_GROUPS = [
+  {
+    key: 'emojiTreats',
+    emoji: [
+      '🎁', '🍦', '🍕', '🍜', '🍭', '🧁',
+      '🍪', '🍫', '🥤', '🍿', '🍩', '🧋',
+      '🍉', '🍓', '🍗', '🥟', '🍰', '🍬',
+    ],
+  },
+  {
+    key: 'emojiPlay',
+    emoji: [
+      '📺', '🎮', '📚', '🎨', '🧸', '🎬',
+      '🎲', '🧩', '🎤', '🎸', '🪀', '🛼',
+      '🥁', '🪁', '♟️', '🎯', '🖍️', '🃏',
+    ],
+  },
+  {
+    key: 'emojiOutings',
+    emoji: [
+      '🛝', '🎢', '⚽', '🚲', '🏊', '🎪',
+      '🏕️', '🦒', '🏖️', '🚂', '🎡', '🏞️',
+      '🐶', '🛒', '🚗', '✈️', '🧗', '🎳',
+    ],
+  },
 ]
 
-// A reward may carry a picture that isn't on the list — one of the
-// starters, or something chosen before the list changed. Showing it
-// alongside the choices means opening the form never silently drops it.
-export function emojiChoices(current) {
-  return current && !REWARD_EMOJI.includes(current) ? [current, ...REWARD_EMOJI] : REWARD_EMOJI
-}
+export const REWARD_EMOJI = REWARD_EMOJI_GROUPS.flatMap(group => group.emoji)
 
 export const DEFAULT_REWARD_EMOJI = REWARD_EMOJI[0]
 

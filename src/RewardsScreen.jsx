@@ -9,7 +9,7 @@ import {
   validateReward,
   labelToText,
   editedLabel,
-  emojiChoices,
+  REWARD_EMOJI_GROUPS,
   DEFAULT_REWARD_EMOJI,
 } from './rewards.js'
 import { watchFamily, familyHasPin } from './family.js'
@@ -360,7 +360,7 @@ function RewardForm({
       />
       <p className="pick-emoji-label"><T k="pickRewardEmoji" /></p>
       <EmojiGrid
-        options={emojiChoices(initialEmoji)}
+        groups={REWARD_EMOJI_GROUPS}
         value={emoji}
         onChange={setEmoji}
         labelKey="rewardEmojiOption"
