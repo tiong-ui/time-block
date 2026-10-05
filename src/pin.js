@@ -11,6 +11,8 @@
 // door codes and bank cards, and a hash costs nothing, so a glance at
 // the database doesn't hand over a number that might unlock something
 // that matters.
+import { resolveAwardDate } from './awardDate.js'
+
 export const PIN_LENGTH = 4
 
 // Wrong guesses are cheap without this: a kid can sit and count up
@@ -88,9 +90,19 @@ export function clearAttempts() {
 export const MAX_MANUAL_STARS = 100
 export const MAX_NOTE_LENGTH = 40
 
-export function validateAward({ stars, note }) {
+export function validateAward({ stars, note, date }, now = Date.now()) {
   const amount = Number(stars)
   if (!Number.isInteger(amount) || amount <= 0) return { ok: false, reason: 'amount-invalid' }
   if (amount > MAX_MANUAL_STARS) return { ok: false, reason: 'amount-too-big' }
-  return { ok: true, value: { stars: amount, note: (note ?? '').trim().slice(0, MAX_NOTE_LENGTH) } }
+  const when = resolveAwardDate(date, now)
+  if (!when.ok) return { ok: false, reason: when.reason }
+  return {
+    ok: true,
+    value: {
+      stars: amount,
+      note: (note ?? '').trim().slice(0, MAX_NOTE_LENGTH),
+      // null means "now, from the server" — see resolveAwardDate.
+      atMs: when.atMs,
+    },
+  }
 }

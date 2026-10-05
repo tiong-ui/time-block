@@ -3,6 +3,7 @@ import { watchFamily, familyHasPin } from './family.js'
 import { addStars } from './kids.js'
 import { starBalance } from './stars.js'
 import { validateAward, MAX_NOTE_LENGTH } from './pin.js'
+import { dateInputValue } from './awardDate.js'
 import { errorDetail } from './errorMessage.js'
 import { tBoth } from './i18n.js'
 import { T } from './T.jsx'
@@ -118,9 +119,66 @@ function Shell({ kid, onBack, children }) {
   )
 }
 
+// Which message a rejected form shows. Both amount problems share
+// one: the field says 1 to 100 either way.
+const AWARD_PROBLEM = {
+  'amount-invalid': 'awardAmountInvalid',
+  'amount-too-big': 'awardAmountInvalid',
+  'date-invalid': 'awardDateInvalid',
+  'date-future': 'awardDateFuture',
+}
+
+// Which day the stars were earned on. Two taps cover almost every
+// case — it happened today, or it happened yesterday and nobody
+// remembered until now — and the picker is there for the rest.
+//
+// The days are worked out once, when the form opens. A tablet left on
+// the kitchen counter overnight will still be offering yesterday in
+// the morning, which is exactly what the field then says it is doing:
+// whatever date is showing is the date that gets written.
+function AwardDate({ value, onChange }) {
+  const [days] = useState(() => {
+    const now = Date.now()
+    return { today: dateInputValue(now), yesterday: dateInputValue(now - 86400000) }
+  })
+
+  return (
+    <div className="award-date">
+      <p className="confirm-title"><T k="whenDidItHappen" /></p>
+      <div className="amount-row">
+        <button
+          type="button"
+          className={`preset-btn amount-btn${value === days.today ? ' amount-active' : ''}`}
+          onClick={() => onChange(days.today)}
+        >
+          <T k="today" />
+        </button>
+        <button
+          type="button"
+          className={`preset-btn amount-btn${value === days.yesterday ? ' amount-active' : ''}`}
+          onClick={() => onChange(days.yesterday)}
+        >
+          <T k="yesterday" />
+        </button>
+      </div>
+      <input
+        className="text-input"
+        type="date"
+        value={value}
+        max={days.today}
+        onChange={e => onChange(e.target.value)}
+        aria-label={tBoth('whenDidItHappen')}
+      />
+    </div>
+  )
+}
+
 function AwardForm({ familyCode, kid }) {
   const [stars, setStars] = useState('5')
   const [note, setNote] = useState('')
+  // Today unless a grown-up says otherwise, because catching up on
+  // yesterday is the exception and today is the rule.
+  const [date, setDate] = useState(() => dateInputValue(Date.now()))
   const [problem, setProblem] = useState(null)
   const [error, setError] = useState(null)
   const [given, setGiven] = useState(null)
@@ -130,8 +188,8 @@ function AwardForm({ familyCode, kid }) {
 
   async function handleSubmit(event) {
     event.preventDefault()
-    const result = validateAward({ stars, note })
-    if (!result.ok) return setProblem('awardAmountInvalid')
+    const result = validateAward({ stars, note, date })
+    if (!result.ok) return setProblem(AWARD_PROBLEM[result.reason] ?? 'awardAmountInvalid')
     setProblem(null)
     setError(null)
     setSaving(true)
@@ -139,6 +197,7 @@ function AwardForm({ familyCode, kid }) {
       await addStars(familyCode, kid.id, result.value.stars, {
         manual: true,
         note: result.value.note,
+        atMs: result.value.atMs,
       })
       setGiven(starBalance(kid).balance + result.value.stars)
       setNote('')
@@ -177,6 +236,7 @@ function AwardForm({ familyCode, kid }) {
         placeholder={tBoth('awardNotePlaceholder')}
         maxLength={MAX_NOTE_LENGTH}
       />
+      <AwardDate value={date} onChange={setDate} />
       {problem && <p className="form-error"><T k={problem} /></p>}
       {error && <p className="form-error">{error}</p>}
       {given !== null && (
