@@ -3,7 +3,7 @@
 // rules that didn't cover the ledger silently swallowed the stars too —
 // the jar animated, the count never moved. These pin down the rule that
 // replaced it.
-import { saveTotalEvenIfUnlogged } from '../src/kids.js'
+import { saveTotalEvenIfUnlogged, validateKidName, MAX_KID_NAME_LENGTH } from '../src/kids.js'
 
 let pass = 0, fail = 0
 const eq = (a, e, n) => { const ok = JSON.stringify(a) === JSON.stringify(e); ok ? pass++ : fail++
@@ -35,5 +35,20 @@ try {
   threw = err.message
 }
 eq(threw, 'unavailable', 'if even the total cannot be written, the caller finds out')
+
+// ── Kid names ────────────────────────────────────────────────────────
+// One rule, used by both the form that adds a kid and the one that
+// renames them: the two drifting apart is how a name that can be typed
+// in one place becomes un-saveable in the other.
+eq(validateKidName('小明'), { ok: true, value: '小明' }, 'a name is a name')
+eq(validateKidName('  小明  '), { ok: true, value: '小明' }, 'and is trimmed')
+eq(validateKidName('').reason, 'empty', 'nothing is not a name')
+eq(validateKidName('   ').reason, 'empty', 'nor is a handful of spaces')
+eq(validateKidName(undefined).reason, 'empty', 'nor a missing one')
+eq(validateKidName('x'.repeat(MAX_KID_NAME_LENGTH)).ok, true, 'the longest allowed name fits')
+eq(validateKidName('x'.repeat(MAX_KID_NAME_LENGTH + 1)).reason, 'too-long', 'one past it does not')
+// Trimming happens before the length check, so trailing spaces can't
+// push an otherwise fine name over the edge.
+eq(validateKidName('x'.repeat(MAX_KID_NAME_LENGTH) + '   ').ok, true, 'trailing spaces do not count against the limit')
 
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)

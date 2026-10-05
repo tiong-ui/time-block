@@ -56,7 +56,7 @@ function loadStoredActivity(kidId) {
 
 export default function FocusCard({
   familyCode, kid, activities, restored, collapsed, onToggle, onActiveChange,
-  onViewStarJar, onEditAvatar,
+  onViewStarJar, onEditKid,
 }) {
   // The family's own list, plus HIIT, which is built in.
   const choices = withHiit(activities)
@@ -407,7 +407,7 @@ export default function FocusCard({
         phase={phase}
         onToggle={onToggle}
         onViewStarJar={onViewStarJar}
-        onEditAvatar={onEditAvatar}
+        onEditKid={onEditKid}
       />
 
       {phase === 'select' && (
@@ -453,15 +453,15 @@ export default function FocusCard({
   )
 }
 
-function KidHeader({ kid, phase, onToggle, onViewStarJar, onEditAvatar }) {
+function KidHeader({ kid, phase, onToggle, onViewStarJar, onEditKid }) {
   return (
     <div className="kid-bar">
       <span className="kid-bar-name">
         <button
           className="kid-bar-avatar"
-          onClick={onEditAvatar}
-          aria-label={tBoth('changeAvatarOf', { name: kid.name })}
-          title={tBoth('changeAvatarOf', { name: kid.name })}
+          onClick={onEditKid}
+          aria-label={tBoth('editKidOf', { name: kid.name })}
+          title={tBoth('editKidOf', { name: kid.name })}
         >
           {kid.avatar}
         </button>

@@ -3,7 +3,7 @@ import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY } from './themes'
 import { errorDetail } from './errorMessage.js'
 import { tBoth } from './i18n.js'
 import { loadStoredFamilyCode, storeFamilyCode } from './family.js'
-import { watchKids, addKid, updateKidAvatar } from './kids.js'
+import { watchKids, addKid, updateKidAvatar, renameKid } from './kids.js'
 import { watchActivities } from './activities.js'
 import FamilySetupScreen from './FamilySetupScreen.jsx'
 import KidPickerScreen from './KidPickerScreen.jsx'
@@ -12,7 +12,7 @@ import StarJarScreen from './StarJarScreen.jsx'
 import StarLogScreen from './StarLogScreen.jsx'
 import RewardsScreen from './RewardsScreen.jsx'
 import GrownUpScreen from './GrownUpScreen.jsx'
-import EditAvatarScreen from './EditAvatarScreen.jsx'
+import EditKidScreen from './EditKidScreen.jsx'
 import ActivitiesScreen from './ActivitiesScreen.jsx'
 import './App.css'
 
@@ -116,6 +116,10 @@ export default function App() {
     await updateKidAvatar(familyCode, openKidIdRef.current, avatar)
   }
 
+  async function handleRenameKid(name) {
+    await renameKid(familyCode, openKidIdRef.current, name)
+  }
+
   const starKid = kids.find(k => k.id === openKidId) ?? null
 
   if (stage === 'family-setup') {
@@ -204,10 +208,15 @@ export default function App() {
       )
     }
 
-    if (stage === 'edit-avatar') {
+    if (stage === 'edit-kid') {
       return (
         <div className="app">
-          <EditAvatarScreen kid={starKid} onSave={handleUpdateAvatar} onBack={backToBoard} />
+          <EditKidScreen
+            kid={starKid}
+            onSaveName={handleRenameKid}
+            onSaveAvatar={handleUpdateAvatar}
+            onBack={backToBoard}
+          />
         </div>
       )
     }
@@ -224,7 +233,7 @@ export default function App() {
         colorTheme={colorTheme}
         onColorThemeChange={setColorTheme}
         onViewStarJar={kidId => openKid(kidId, 'starjar')}
-        onEditAvatar={kidId => openKid(kidId, 'edit-avatar')}
+        onEditKid={kidId => openKid(kidId, 'edit-kid')}
         onAddKid={() => setStage('add-kid')}
       />
     </div>

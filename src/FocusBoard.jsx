@@ -20,7 +20,7 @@ import { loadSessions, loadLastKid } from './session.js'
 export default function FocusBoard({
   familyCode, kids, activities, kidsLoaded, loadError,
   colorTheme, onColorThemeChange,
-  onViewStarJar, onEditAvatar, onAddKid,
+  onViewStarJar, onEditKid, onAddKid,
 }) {
   // Read once, at mount: every card takes its own restored session from
   // here, so a reload brings the whole board back rather than whichever
@@ -96,7 +96,7 @@ export default function FocusBoard({
             onToggle={() => toggle(kid.id)}
             onActiveChange={setBusy}
             onViewStarJar={() => onViewStarJar(kid.id)}
-            onEditAvatar={() => onEditAvatar(kid.id)}
+            onEditKid={() => onEditKid(kid.id)}
           />
         ))}
       </div>
