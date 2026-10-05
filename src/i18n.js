@@ -158,6 +158,9 @@ export const STRINGS = {
   starsGiven: { zh: '加好了！{name}現在有 {count} 顆可以用', en: 'Done! {name} now has {count} to spend' },
   manualStar: { zh: '大人加的星星', en: 'Added by a grown-up' },
   awardAmountInvalid: { zh: '要是 1 到 100 之間的整數', en: 'Must be a whole number from 1 to 100' },
+  whenDidItHappen: { zh: '是哪一天的？', en: 'Which day was it?' },
+  awardDateFuture: { zh: '那一天還沒到', en: "That day hasn't happened yet" },
+  awardDateInvalid: { zh: '這個日期看不懂', en: "That date doesn't look right" },
   errSavePin: { zh: '密碼存不起來{detail}，請再試一次。', en: "Couldn't save the PIN{detail}. Please try again." },
   errGiveStars: { zh: '星星沒加成功{detail}，請再試一次。', en: "Couldn't add those stars{detail}. Please try again." },
 

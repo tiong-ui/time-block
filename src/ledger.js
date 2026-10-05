@@ -30,7 +30,11 @@ export function newLedgerEntry(familyCode, kidId) {
 // `manual` marks stars a grown-up added by hand rather than ones a
 // finished session paid out — worth telling apart when reading the log
 // back, so "where did these 20 come from?" has an answer.
-export function earnedEntry({ stars, activityId, activityLabel, activityEmoji, minutes, manual, note }) {
+// `atMs` backdates an entry to a day that has already passed; left
+// out, the server stamps it with now. A backdated one is marked as
+// such so the log doesn't read a time of day off it that nobody
+// actually knows — see awardDate.js.
+export function earnedEntry({ stars, activityId, activityLabel, activityEmoji, minutes, manual, note, atMs }) {
   return {
     kind: 'earned',
     stars,
@@ -43,7 +47,8 @@ export function earnedEntry({ stars, activityId, activityLabel, activityEmoji, m
     minutes: minutes ?? null,
     manual: Boolean(manual),
     note: note || null,
-    at: serverTimestamp(),
+    backdated: atMs != null,
+    at: atMs == null ? serverTimestamp() : Timestamp.fromMillis(atMs),
   }
 }
 

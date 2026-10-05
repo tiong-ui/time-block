@@ -101,7 +101,14 @@ function StarLogBody({ entries, error }) {
 
 function LogRow({ entry }) {
   const spent = entry.kind === 'spent'
-  const time = new Date(entry.atMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+  // A backdated star was filed under a day, not a moment — printing
+  // the midday it was stored at would claim a time nobody knows. The
+  // day's own heading already says when.
+  const time = entry.backdated
+    ? null
+    : new Date(entry.atMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+  const length = !spent && entry.minutes ? `⏱${entry.minutes}` : null
+  const when = [time, length].filter(Boolean).join(' · ')
 
   return (
     <li className={`log-row${spent ? ' log-row-spent' : ''}`}>
@@ -119,10 +126,7 @@ function LogRow({ entry }) {
         {/* Time and length as one short line. A stacked bilingual
             "20 minutes of focus" wrapped and doubled every row's height
             for a detail the emoji and the label already carry. */}
-        <span className="log-when">
-          {time}
-          {!spent && entry.minutes ? ` · ⏱${entry.minutes}` : null}
-        </span>
+        {when && <span className="log-when">{when}</span>}
       </span>
       <span className="log-amount">{spent ? '−' : '+'}{entry.stars}⭐</span>
     </li>

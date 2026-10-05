@@ -46,8 +46,9 @@ eq(lockoutStatus(attempts, now + LOCKOUT_MS).triesLeft, MAX_ATTEMPTS, 'and the c
 eq(lockoutStatus(undefined, now).locked, false, 'a device that has never guessed is not locked')
 
 // ── Manual award ─────────────────────────────────────────────────────
-eq(validateAward({ stars: '20', note: '  幫忙洗碗  ' }), { ok: true, value: { stars: 20, note: '幫忙洗碗' } }, 'takes an amount and trims the note')
-eq(validateAward({ stars: '5' }), { ok: true, value: { stars: 5, note: '' } }, 'a note is optional')
+eq(validateAward({ stars: '20', note: '  幫忙洗碗  ' }), { ok: true, value: { stars: 20, note: '幫忙洗碗', atMs: null } }, 'takes an amount and trims the note')
+eq(validateAward({ stars: '5' }), { ok: true, value: { stars: 5, note: '', atMs: null } }, 'a note is optional')
+eq(validateAward({ stars: '5' }).value.atMs, null, 'no date given means let the server stamp it')
 eq(validateAward({ stars: '0' }).reason, 'amount-invalid', 'zero stars is not an award')
 eq(validateAward({ stars: '-5' }).reason, 'amount-invalid', 'nor is a negative one')
 eq(validateAward({ stars: '2.5' }).reason, 'amount-invalid', 'nor half a star')

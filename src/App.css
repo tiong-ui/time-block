@@ -1657,3 +1657,20 @@ h1 .t-en {
   opacity: 0.5;
   cursor: default;
 }
+
+/* The day row sits inside the award form, so it keeps the form's
+   full width rather than shrinking to its own content. */
+.award-date {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+/* A date field renders its own calendar glyph, which lands on the
+   browser's colours unless it is told otherwise. */
+.award-date input[type='date'] {
+  color-scheme: light dark;
+  text-align: center;
+}
