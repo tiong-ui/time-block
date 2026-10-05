@@ -8,7 +8,7 @@ import {
   validateActivity,
   labelToText,
   labelHalves,
-  emojiChoices,
+  ACTIVITY_EMOJI_GROUPS,
   DEFAULT_ACTIVITY_EMOJI,
   HIIT_ACTIVITY,
   MAX_ACTIVITY_NAME,
@@ -189,7 +189,7 @@ function ActivityForm({
       />
       <p className="pick-emoji-label"><T k="pickRewardEmoji" /></p>
       <EmojiGrid
-        options={emojiChoices(initialEmoji)}
+        groups={ACTIVITY_EMOJI_GROUPS}
         value={emoji}
         onChange={setEmoji}
         labelKey="rewardEmojiOption"

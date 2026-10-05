@@ -53,6 +53,10 @@ export const ACTIVITY_EMOJI = [
   '🌱', '🐕', '🧺', '🛏️', '🦷', '🧘',
 ]
 
+// One group: this list is short enough to read at a glance, so it gets
+// no tab bar until the family has typed an emoji of their own in.
+export const ACTIVITY_EMOJI_GROUPS = [{ key: 'emojiTasks', emoji: ACTIVITY_EMOJI }]
+
 export const DEFAULT_ACTIVITY_EMOJI = ACTIVITY_EMOJI[0]
 
 function activitiesCollection(familyCode) {
@@ -150,10 +154,6 @@ export function labelFromHalves({ zh, en }) {
   const enText = (en ?? '').trim()
   if (zhText && enText) return { zh: zhText, en: enText }
   return zhText || enText
-}
-
-export function emojiChoices(current) {
-  return current && !ACTIVITY_EMOJI.includes(current) ? [current, ...ACTIVITY_EMOJI] : ACTIVITY_EMOJI
 }
 
 // One of the two names is enough — a family that only wants 圍棋

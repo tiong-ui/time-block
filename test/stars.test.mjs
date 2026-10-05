@@ -3,12 +3,12 @@
 // lives behind Firestore — so the maths is pure and checked here.
 import { starBalance, canAfford, jarStats, JAR_CAPACITY } from '../src/stars.js'
 import { groupByDay, ledgerTotals } from '../src/ledger.js'
-import { validateReward, labelToText, editedLabel, emojiChoices, REWARD_EMOJI } from '../src/rewards.js'
+import { validateReward, labelToText, editedLabel, REWARD_EMOJI, REWARD_EMOJI_GROUPS } from '../src/rewards.js'
 import {
-  withHiit, HIIT_ACTIVITY, DEFAULT_ACTIVITIES, ACTIVITY_EMOJI,
-  validateActivity, emojiChoices as activityEmojiChoices,
-  labelHalves, labelFromHalves,
+  withHiit, HIIT_ACTIVITY, DEFAULT_ACTIVITIES, ACTIVITY_EMOJI, ACTIVITY_EMOJI_GROUPS,
+  validateActivity, labelHalves, labelFromHalves,
 } from '../src/activities.js'
+import { leadingEmoji } from '../src/emoji.js'
 
 let pass = 0, fail = 0
 const eq = (a, e, n) => { const ok = JSON.stringify(a) === JSON.stringify(e); ok ? pass++ : fail++
@@ -75,10 +75,16 @@ eq(editedLabel(starter, '去動物園'), '去動物園', 'a real rename becomes 
 eq(editedLabel('看卡通', '看兩集卡通'), '看兩集卡通', 'renaming a typed reward just replaces it')
 
 // ── The picture on a reward ──────────────────────────────────────────
-eq(emojiChoices('🛝'), REWARD_EMOJI, 'a picture already on the list adds nothing to it')
-eq(emojiChoices('🦖')[0], '🦖', 'one that is not is offered first, so opening the form never drops it')
-eq(emojiChoices('🦖').length, REWARD_EMOJI.length + 1, 'and the rest of the list still follows')
-eq(emojiChoices(undefined), REWARD_EMOJI, 'a reward with no picture just gets the list')
+// What the picker puts in front of its own lists. One rule now, shared
+// by every picker, rather than a copy per emoji list.
+const rewardLeading = value => leadingEmoji({ value, groups: REWARD_EMOJI_GROUPS })
+eq(rewardLeading('🛝'), [], 'a picture already on the list needs no special place')
+eq(rewardLeading('🦖'), ['🦖'], 'one that is not leads, so opening the form never drops it')
+eq(rewardLeading(undefined), [], 'a reward with no picture adds nothing')
+eq(leadingEmoji({ value: '🦖', groups: REWARD_EMOJI_GROUPS, custom: ['🦕', '🦖'] }), ['🦕', '🦖'],
+  'one already typed in on this device is just one of the family\'s own')
+eq(leadingEmoji({ value: '🐙', groups: REWARD_EMOJI_GROUPS, custom: ['🦕'] }), ['🐙', '🦕'],
+  'an off-list choice leads the ones typed in before it')
 // Every starter must be representable, or editing one would show
 // nothing selected.
 eq(['📺', '🍜', '🛝', '🧸'].every(e => REWARD_EMOJI.includes(e)), true, 'every starter picture is on the list')
@@ -112,8 +118,9 @@ eq(labelHalves('圍棋'), { zh: '圍棋', en: '' }, 'a single name opens in the 
 eq(labelHalves(undefined), { zh: '', en: '' }, 'a missing label opens empty rather than crashing')
 eq(labelHalves(labelFromHalves({ zh: 'a', en: 'b' })), { zh: 'a', en: 'b' }, 'what is saved is what reopens')
 
-eq(activityEmojiChoices('📝'), ACTIVITY_EMOJI, 'a picture already on the list adds nothing')
-eq(activityEmojiChoices('🦖')[0], '🦖', 'one that is not is offered first')
+eq(leadingEmoji({ value: '📝', groups: ACTIVITY_EMOJI_GROUPS }), [], 'a picture already on the list adds nothing')
+eq(leadingEmoji({ value: '🦖', groups: ACTIVITY_EMOJI_GROUPS }), ['🦖'], 'one that is not is offered first')
+eq(ACTIVITY_EMOJI_GROUPS.flatMap(g => g.emoji), ACTIVITY_EMOJI, 'the grouped list is the flat one')
 eq(DEFAULT_ACTIVITIES.every(a => ACTIVITY_EMOJI.includes(a.emoji)), true, 'every starter picture is on the list')
 
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)
