@@ -40,7 +40,7 @@ export const STRINGS = {
   addMyStars: { zh: '⭐ 把我的 {count} 顆星星放進去！', en: '⭐ Add my {count} stars!' },
 
   // Star Jar
-  starJar: { zh: '星星罐', en: 'Star Jar' },
+  openStarJar: { zh: '打開{name}的星星罐，現在有 {count} 顆', en: "Open {name}'s Star Jar — {count} right now" },
   starJarTitle: { zh: '{name}的星星罐', en: "{name}'s Star Jar" },
   totalStars: { zh: '總共賺到', en: 'Earned ever' },
   fullJars: { zh: '集滿的罐子', en: 'Full Jars' },

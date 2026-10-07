@@ -14,7 +14,7 @@ import {
   intervalAt,
   upcomingCues,
 } from './hiit.js'
-import { STARS_PER_SESSION, starBalance } from './stars.js'
+import { STARS_PER_SESSION, starBalance, jarStats, JAR_CAPACITY } from './stars.js'
 import { addStars } from './kids.js'
 import { errorDetail } from './errorMessage.js'
 import { tBoth } from './i18n.js'
@@ -418,15 +418,28 @@ export default function FocusCard({
     onToggle()
   }
 
+  // The ▴ used to be the keyboard's way to fold a card, and it has
+  // gone. The card answers in its place: it takes focus, and Enter,
+  // Space or Escape put it away. Only when the key landed on the card
+  // itself — Space on a minutes button has to start the timer, not
+  // fold the card out from under it.
+  function handleCardKey(event) {
+    if (!canCollapse || event.target !== event.currentTarget) return
+    if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Escape') return
+    event.preventDefault()
+    onToggle()
+  }
+
   return (
     <section
       className={`focus-card focus-${phase}${canCollapse ? ' focus-tap-to-fold' : ''}`}
       onClick={handleCardClick}
+      onKeyDown={handleCardKey}
+      tabIndex={canCollapse ? 0 : undefined}
+      aria-label={canCollapse ? tBoth('collapseCard', { name: kid.name }) : undefined}
     >
       <KidHeader
         kid={kid}
-        canCollapse={canCollapse}
-        onToggle={onToggle}
         onViewStarJar={onViewStarJar}
         onEditKid={onEditKid}
       />
@@ -474,7 +487,7 @@ export default function FocusCard({
   )
 }
 
-function KidHeader({ kid, canCollapse, onToggle, onViewStarJar, onEditKid }) {
+function KidHeader({ kid, onViewStarJar, onEditKid }) {
   return (
     <div className="kid-bar">
       <span className="kid-bar-name">
@@ -488,26 +501,67 @@ function KidHeader({ kid, canCollapse, onToggle, onViewStarJar, onEditKid }) {
         </button>
         {kid.name}
       </span>
-      <span className="kid-bar-actions">
-        <button className="text-btn bi-inline" onClick={onViewStarJar}>
-          ⭐ <T k="starJar" /> ({starBalance(kid).balance})
-        </button>
-        {/* Tapping the card does this too. The button stays because a
-            background tap is nothing to a keyboard or a screen reader,
-            and because it says out loud what the card is for. */}
-        {canCollapse && (
-          <button
-            className="collapse-btn"
-            onClick={onToggle}
-            aria-expanded
-            aria-label={tBoth('collapseCard', { name: kid.name })}
-          >
-            ▴
-          </button>
-        )}
-      </span>
+      <StarJarChip kid={kid} onOpen={onViewStarJar} />
     </div>
   )
+}
+
+// The stars, as the jar they go into rather than a line of text. A kid
+// who can't read yet can still see how full it is, and the same jar
+// waits on the other side of the tap — so what to tap and what it
+// leads to are the same picture.
+//
+// It is still a <button> underneath: that is what makes it reachable
+// by keyboard, announced as something to press, and tappable the way a
+// control should be. Only the look changed.
+function StarJarChip({ kid, onOpen }) {
+  const { balance } = starBalance(kid)
+  const { currentJarStars } = jarStats(balance)
+  const fill = Math.min(1, currentJarStars / JAR_CAPACITY)
+
+  return (
+    <button
+      className="star-jar-chip"
+      onClick={onOpen}
+      aria-label={tBoth('openStarJar', { name: kid.name, count: balance })}
+      title={tBoth('openStarJar', { name: kid.name, count: balance })}
+    >
+      <MiniJar fill={fill} />
+      <span className="star-jar-count">{balance}</span>
+      <span className="star-jar-more" aria-hidden="true">›</span>
+    </button>
+  )
+}
+
+// Drawn rather than an emoji, because the fill level has to mean
+// something: it is the jar on the Star Jar screen, scaled down. A lid
+// narrower than the body is what makes the silhouette a jar — without
+// it the same rounded rectangle reads as a battery.
+function MiniJar({ fill }) {
+  const body = { x: 2.5, y: 7, w: 17, h: 17 }
+  const height = body.h * fill
+
+  return (
+    <svg className="mini-jar" viewBox="0 0 22 26" width="22" height="26" aria-hidden="true">
+      <rect x="5.5" y="1.5" width="11" height="4" rx="1.8" className="mini-jar-lid" />
+      <rect {...rectProps(body)} rx="5" className="mini-jar-glass" />
+      {height > 0 && (
+        <rect
+          x={body.x}
+          y={body.y + body.h - height}
+          width={body.w}
+          height={height}
+          rx={Math.min(5, height / 2)}
+          className="mini-jar-fill"
+        />
+      )}
+      <rect {...rectProps(body)} rx="5" className="mini-jar-outline" />
+    </svg>
+  )
+}
+
+function rectProps({ x, y, w, h }) {
+  return { x, y, width: w, height: h }
 }
 
 function SelectBody({
