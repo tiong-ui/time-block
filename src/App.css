@@ -1807,3 +1807,79 @@ h1 .t-en {
 .focus-tap-to-fold .activity-chip {
   cursor: pointer;
 }
+
+/* ── The star jar on a kid's card ──
+   A tile rather than a line of text: something to press, with the
+   count and how full the jar is both readable without reading. */
+.star-jar-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  /* Tall enough for a child's finger: the usual 44px floor, which the
+     text link it replaces was nowhere near. */
+  min-height: 44px;
+  padding: 4px 12px 4px 10px;
+  border: none;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  box-shadow: 0 2px 0 var(--accent-pale);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.star-jar-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 var(--accent-pale);
+}
+
+/* Pressed, it sits down on its own shadow — the cue a kid reads as
+   "that did something" without any text saying so. */
+.star-jar-chip:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 var(--accent-pale);
+}
+
+.star-jar-count {
+  font-weight: 800;
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--accent-soft-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.star-jar-more {
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--accent-pale);
+  font-weight: 700;
+}
+
+.mini-jar {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.mini-jar-lid {
+  fill: var(--accent);
+}
+
+.mini-jar-glass {
+  fill: var(--card-bg);
+}
+
+.mini-jar-fill {
+  fill: var(--accent);
+}
+
+.mini-jar-outline {
+  fill: none;
+  stroke: var(--accent-pale);
+  stroke-width: 1.4;
+}
+
+/* A card that can be folded takes focus so a keyboard can fold it,
+   now that the arrow it used to press has gone. */
+.focus-tap-to-fold:focus-visible {
+  outline: 3px solid var(--accent-pale);
+  outline-offset: 3px;
+}
