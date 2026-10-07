@@ -55,7 +55,7 @@ function loadStoredActivity(kidId) {
 }
 
 export default function FocusCard({
-  familyCode, kid, activities, restored, collapsed, onToggle, onActiveChange,
+  familyCode, kid, activities, restored, collapsed, collapsible, onToggle, onActiveChange,
   onViewStarJar, onEditKid,
 }) {
   // The family's own list, plus HIIT, which is built in.
@@ -400,11 +400,32 @@ export default function FocusCard({
     )
   }
 
+  // Only an idle card can be put away: one counting down or waiting to
+  // be collected has to stay where it can be seen. And a family with
+  // one kid has nothing to fold away from, so the card offers no way
+  // to try.
+  const canCollapse = Boolean(collapsible) && phase === 'select'
+
+  // Tapping the card itself puts it away. The ▴ used to be the only
+  // way out — a small target to find on a board of cards — so the
+  // whole card is the target now, minus the things that already do
+  // something when tapped. Those keep their own jobs: picking a task,
+  // setting the rounds, opening the star jar, changing the avatar, and
+  // above all starting the timer.
+  function handleCardClick(event) {
+    if (!canCollapse) return
+    if (event.target.closest('button, a, input, select, textarea, label, [role="button"]')) return
+    onToggle()
+  }
+
   return (
-    <section className={`focus-card focus-${phase}`}>
+    <section
+      className={`focus-card focus-${phase}${canCollapse ? ' focus-tap-to-fold' : ''}`}
+      onClick={handleCardClick}
+    >
       <KidHeader
         kid={kid}
-        phase={phase}
+        canCollapse={canCollapse}
         onToggle={onToggle}
         onViewStarJar={onViewStarJar}
         onEditKid={onEditKid}
@@ -453,7 +474,7 @@ export default function FocusCard({
   )
 }
 
-function KidHeader({ kid, phase, onToggle, onViewStarJar, onEditKid }) {
+function KidHeader({ kid, canCollapse, onToggle, onViewStarJar, onEditKid }) {
   return (
     <div className="kid-bar">
       <span className="kid-bar-name">
@@ -471,9 +492,10 @@ function KidHeader({ kid, phase, onToggle, onViewStarJar, onEditKid }) {
         <button className="text-btn bi-inline" onClick={onViewStarJar}>
           ⭐ <T k="starJar" /> ({starBalance(kid).balance})
         </button>
-        {/* Only an idle card can be put away. One that's counting down
-            or waiting to be collected has to stay where it can be seen. */}
-        {phase === 'select' && (
+        {/* Tapping the card does this too. The button stays because a
+            background tap is nothing to a keyboard or a screen reader,
+            and because it says out loud what the card is for. */}
+        {canCollapse && (
           <button
             className="collapse-btn"
             onClick={onToggle}

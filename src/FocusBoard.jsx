@@ -93,6 +93,7 @@ export default function FocusBoard({
             activities={activities}
             restored={restored[kid.id] ?? null}
             collapsed={isCollapsed(kid)}
+            collapsible={foldable}
             onToggle={() => toggle(kid.id)}
             onActiveChange={setBusy}
             onViewStarJar={() => onViewStarJar(kid.id)}

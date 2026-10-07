@@ -1786,3 +1786,24 @@ h1 .t-en {
   font-size: 1.6rem;
   text-align: center;
 }
+
+/* A card you can fold by tapping it says so with the cursor. Nothing
+   on touch, where there is no cursor to say it with — there the whole
+   card simply responds, which is the point. */
+.focus-tap-to-fold {
+  cursor: pointer;
+}
+
+.focus-tap-to-fold button,
+.focus-tap-to-fold input,
+.focus-tap-to-fold label {
+  cursor: auto;
+}
+
+.focus-tap-to-fold .preset-btn,
+.focus-tap-to-fold .collapse-btn,
+.focus-tap-to-fold .text-btn,
+.focus-tap-to-fold .kid-bar-avatar,
+.focus-tap-to-fold .activity-chip {
+  cursor: pointer;
+}
