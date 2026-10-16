@@ -19,6 +19,7 @@ import { tBoth } from './i18n.js'
 import { T, Label } from './T.jsx'
 import { PinGate, PinSetup } from './PinGate.jsx'
 import BackBar from './BackBar.jsx'
+import Modal from './Modal.jsx'
 import EmojiGrid from './EmojiGrid.jsx'
 
 // What the stars are for. Redeeming is the kid's to do; the list
@@ -295,10 +296,13 @@ function labelText(label) {
   return label && typeof label === 'object' ? `${label.zh} / ${label.en}` : String(label ?? '')
 }
 
+// Asked over the list rather than under it. It used to be appended to
+// the bottom of the screen, so on a long list of rewards tapping one
+// appeared to do nothing until you scrolled down to find the question.
 function ConfirmRedeem({ reward, balance, onCancel, onConfirm }) {
   return (
-    <div className="confirm-card">
-      <p className="confirm-title"><T k="confirmRedeemTitle" /></p>
+    <Modal onClose={onCancel} labelledBy="confirm-redeem-title">
+      <p className="confirm-title" id="confirm-redeem-title"><T k="confirmRedeemTitle" /></p>
       <p className="confirm-reward">
         <span aria-hidden="true">{reward.emoji ?? '🎁'}</span> <Label value={reward.label} />
       </p>
@@ -307,14 +311,14 @@ function ConfirmRedeem({ reward, balance, onCancel, onConfirm }) {
       </p>
       <p className="confirm-grownup"><T k="askGrownUp" /></p>
       <div className="confirm-actions">
-        <button className="preset-btn wide-btn collect-btn" onClick={onConfirm}>
+        <button className="preset-btn wide-btn collect-btn" onClick={onConfirm} autoFocus>
           <T k="yesRedeem" />
         </button>
         <button className="preset-btn wide-btn" onClick={onCancel}>
           <T k="cancel" />
         </button>
       </div>
-    </div>
+    </Modal>
   )
 }
 
