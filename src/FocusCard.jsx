@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { PRESETS } from './presets'
-import { ACTIVITY_STORAGE_KEY, withHiit } from './activities.js'
+import { ACTIVITY_STORAGE_KEY, withHiit, activityMinMinutes, meetsMinimum } from './activities.js'
 import {
   HIIT_ACTIVITY_ID,
   EXERCISE_OPTIONS,
@@ -448,6 +448,7 @@ export default function FocusCard({
         <SelectBody
           activityId={activityId}
           activities={choices}
+          activity={activity}
           onActivityChange={setActivityId}
           isHiit={isHiit}
           exerciseSec={exerciseSec}
@@ -565,9 +566,13 @@ function rectProps({ x, y, w, h }) {
 }
 
 function SelectBody({
-  activityId, activities, onActivityChange, isHiit,
+  activityId, activities, activity, onActivityChange, isHiit,
   exerciseSec, onExerciseSecChange, restSec, onRestSecChange, onSelect,
 }) {
+  // A family can say a task is only worth starting for so long. HIIT
+  // sets its own shape from the round lengths, so it never carries one.
+  const minMinutes = isHiit ? 0 : activityMinMinutes(activity)
+
   return (
     <div className="card-body select-body">
       <p className="subtitle"><T k="whatFocusingOn" /></p>
@@ -589,13 +594,30 @@ function SelectBody({
         </div>
       )}
       <p className="subtitle"><T k="pickHowLong" /></p>
+      {/* Said out loud rather than left to be deduced from greyed-out
+          buttons: a kid who can see why half the grid is dim learns the
+          rule, and one who can't just sees a broken screen. */}
+      {minMinutes > 0 && (
+        <p className="min-minutes-note">
+          <T k="needsAtLeast" vars={{ count: minMinutes }} />
+        </p>
+      )}
       <div className="preset-grid">
-        {PRESETS.map(minutes => (
-          <button key={minutes} className="preset-btn" onClick={() => onSelect(minutes)}>
-            <span className="preset-number">{minutes}</span>
-            <span className="preset-unit"><T k="minutes" /></span>
-          </button>
-        ))}
+        {PRESETS.map(minutes => {
+          const allowed = meetsMinimum(minutes, { minMinutes })
+          return (
+            <button
+              key={minutes}
+              className="preset-btn"
+              onClick={() => onSelect(minutes)}
+              disabled={!allowed}
+              aria-disabled={!allowed}
+            >
+              <span className="preset-number">{minutes}</span>
+              <span className="preset-unit"><T k="minutes" /></span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )

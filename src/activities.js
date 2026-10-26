@@ -18,9 +18,32 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import { db, authReady } from './firebase.js'
+import { PRESETS } from './presets.js'
 
 export const ACTIVITY_STORAGE_KEY = 'focus-timer-last-activity'
 export const MAX_ACTIVITY_NAME = 20
+
+// Some tasks aren't worth starting for five minutes. A family can say
+// so per task — homework only at half an hour, piano at twenty or more
+// — and the timer then offers only the lengths that qualify.
+//
+// Stored as a floor rather than a list of allowed lengths: "at least
+// this long" is the rule a parent actually has in mind, it survives
+// the preset list changing, and it makes "no rule" simply zero.
+export const NO_MINIMUM = 0
+export const MIN_MINUTES_CHOICES = [NO_MINIMUM, ...PRESETS]
+
+// An activity from Firestore may predate this field, or carry
+// something that was never one of the choices. Either way it means no
+// rule rather than a broken screen.
+export function activityMinMinutes(activity) {
+  const value = Number(activity?.minMinutes)
+  return MIN_MINUTES_CHOICES.includes(value) ? value : NO_MINIMUM
+}
+
+export function meetsMinimum(minutes, activity) {
+  return minutes >= activityMinMinutes(activity)
+}
 
 // HIIT is not a tag like the others: picking it runs the timer as
 // work/rest intervals. That behaviour lives in code, so the entry that
@@ -106,20 +129,22 @@ export async function seedDefaultActivities(familyCode) {
   return true
 }
 
-export async function addActivity(familyCode, { label, emoji }) {
+export async function addActivity(familyCode, { label, emoji, minMinutes }) {
   await authReady
   await addDoc(activitiesCollection(familyCode), {
     label,
     emoji: emoji || DEFAULT_ACTIVITY_EMOJI,
+    minMinutes: activityMinMinutes({ minMinutes }),
     createdAt: serverTimestamp(),
   })
 }
 
-export async function updateActivity(familyCode, activityId, { label, emoji }) {
+export async function updateActivity(familyCode, activityId, { label, emoji, minMinutes }) {
   await authReady
   await updateDoc(doc(db, 'families', familyCode, 'activities', activityId), {
     label,
     emoji: emoji || DEFAULT_ACTIVITY_EMOJI,
+    minMinutes: activityMinMinutes({ minMinutes }),
   })
 }
 
@@ -159,12 +184,21 @@ export function labelFromHalves({ zh, en }) {
 // One of the two names is enough — a family that only wants 圍棋
 // shouldn't have to invent an English word for it, and the other way
 // round. Both is better, and what the starters do.
-export function validateActivity({ zh, en }) {
+export function validateActivity({ zh, en, minMinutes }) {
   const zhText = (zh ?? '').trim()
   const enText = (en ?? '').trim()
   if (!zhText && !enText) return { ok: false, reason: 'name-missing' }
   if (zhText.length > MAX_ACTIVITY_NAME || enText.length > MAX_ACTIVITY_NAME) {
     return { ok: false, reason: 'name-too-long' }
   }
-  return { ok: true, value: { label: labelFromHalves({ zh: zhText, en: enText }) } }
+  return {
+    ok: true,
+    value: {
+      label: labelFromHalves({ zh: zhText, en: enText }),
+      // Anything that isn't one of the offered floors is no floor. The
+      // form can only produce the choices, so this is about what a
+      // caller or an older document might hold.
+      minMinutes: activityMinMinutes({ minMinutes }),
+    },
+  }
 }

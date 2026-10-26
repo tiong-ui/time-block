@@ -9,6 +9,8 @@ import {
   labelToText,
   labelHalves,
   ACTIVITY_EMOJI_GROUPS,
+  MIN_MINUTES_CHOICES,
+  activityMinMinutes,
   DEFAULT_ACTIVITY_EMOJI,
   HIIT_ACTIVITY,
   MAX_ACTIVITY_NAME,
@@ -91,13 +93,21 @@ export function ActivitiesView({ activities, error, onAdd, onEdit, onRemove, onB
                 saveKey="saveChanges"
                 initialNames={labelHalves(activity.label)}
                 initialEmoji={activity.emoji ?? DEFAULT_ACTIVITY_EMOJI}
+                initialMinMinutes={activityMinMinutes(activity)}
                 onCancel={() => setEditing(null)}
                 onSave={async value => { await onEdit(activity, value); setEditing(null) }}
               />
             ) : (
               <>
                 <span className="reward-emoji" aria-hidden="true">{activity.emoji}</span>
-                <span className="reward-name"><Label value={activity.label} /></span>
+                <span className="reward-name">
+                  <Label value={activity.label} />
+                  {activityMinMinutes(activity) > 0 && (
+                    <span className="activity-min">
+                      <T k="minMinutesChip" vars={{ count: activityMinMinutes(activity) }} />
+                    </span>
+                  )}
+                </span>
                 <span className="reward-tools">
                   <button
                     className="reward-remove"
@@ -150,16 +160,18 @@ function ActivityForm({
   titleKey, saveKey,
   initialNames = { zh: '', en: '' },
   initialEmoji = DEFAULT_ACTIVITY_EMOJI,
+  initialMinMinutes = 0,
   onSave, onCancel,
 }) {
   const [zh, setZh] = useState(initialNames.zh)
   const [en, setEn] = useState(initialNames.en)
   const [emoji, setEmoji] = useState(initialEmoji)
+  const [minMinutes, setMinMinutes] = useState(initialMinMinutes)
   const [problem, setProblem] = useState(null)
 
   function handleSubmit(event) {
     event.preventDefault()
-    const result = validateActivity({ zh, en })
+    const result = validateActivity({ zh, en, minMinutes })
     if (!result.ok) return setProblem('activityNameNeeded')
     setProblem(null)
     onSave({ ...result.value, emoji })
@@ -194,6 +206,23 @@ function ActivityForm({
         onChange={setEmoji}
         labelKey="rewardEmojiOption"
       />
+      {/* The rule a grown-up actually has in mind — "homework is half
+          an hour, not ten minutes" — said as a floor, so it keeps
+          meaning the same thing if the offered lengths ever change. */}
+      <p className="pick-emoji-label"><T k="minMinutesLabel" /></p>
+      <div className="amount-row min-minutes-row">
+        {MIN_MINUTES_CHOICES.map(value => (
+          <button
+            key={value}
+            type="button"
+            className={`preset-btn amount-btn${minMinutes === value ? ' amount-active' : ''}`}
+            onClick={() => setMinMinutes(value)}
+            aria-pressed={minMinutes === value}
+          >
+            {value === 0 ? <T k="noMinimum" /> : <T k="minutesCount" vars={{ count: value }} />}
+          </button>
+        ))}
+      </div>
       {problem && <p className="form-error"><T k={problem} /></p>}
       <div className="confirm-actions">
         <button className="preset-btn wide-btn collect-btn" type="submit"><T k={saveKey} /></button>

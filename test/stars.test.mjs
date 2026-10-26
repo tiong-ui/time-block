@@ -7,7 +7,9 @@ import { validateReward, labelToText, editedLabel, REWARD_EMOJI, REWARD_EMOJI_GR
 import {
   withHiit, HIIT_ACTIVITY, DEFAULT_ACTIVITIES, ACTIVITY_EMOJI, ACTIVITY_EMOJI_GROUPS,
   validateActivity, labelHalves, labelFromHalves,
+  activityMinMinutes, meetsMinimum, MIN_MINUTES_CHOICES, NO_MINIMUM,
 } from '../src/activities.js'
+import { PRESETS } from '../src/presets.js'
 import { leadingEmoji } from '../src/emoji.js'
 
 let pass = 0, fail = 0
@@ -100,9 +102,9 @@ eq(DEFAULT_ACTIVITIES.some(a => a.id === 'hiit'), false, 'HIIT is never seeded a
 
 // Both languages are editable, and either one alone is enough — a
 // family that only wants 圍棋 shouldn't have to invent an English word.
-eq(validateActivity({ zh: ' 小提琴 ', en: ' Violin ' }), { ok: true, value: { label: { zh: '小提琴', en: 'Violin' } } }, 'both names are kept, trimmed')
-eq(validateActivity({ zh: '圍棋', en: '' }), { ok: true, value: { label: '圍棋' } }, 'Chinese alone is allowed')
-eq(validateActivity({ zh: '', en: 'Chess' }), { ok: true, value: { label: 'Chess' } }, 'English alone is too')
+eq(validateActivity({ zh: ' 小提琴 ', en: ' Violin ' }), { ok: true, value: { label: { zh: '小提琴', en: 'Violin' }, minMinutes: 0 } }, 'both names are kept, trimmed')
+eq(validateActivity({ zh: '圍棋', en: '' }), { ok: true, value: { label: '圍棋', minMinutes: 0 } }, 'Chinese alone is allowed')
+eq(validateActivity({ zh: '', en: 'Chess' }), { ok: true, value: { label: 'Chess', minMinutes: 0 } }, 'English alone is too')
 eq(validateActivity({ zh: ' ', en: ' ' }).reason, 'name-missing', 'but not neither')
 eq(validateActivity({ zh: 'x'.repeat(21), en: 'ok' }).reason, 'name-too-long', 'an unreasonably long one is rejected')
 eq(validateActivity({ zh: 'ok', en: 'x'.repeat(21) }).reason, 'name-too-long', 'in either box')
@@ -122,5 +124,40 @@ eq(leadingEmoji({ value: '📝', groups: ACTIVITY_EMOJI_GROUPS }), [], 'a pictur
 eq(leadingEmoji({ value: '🦖', groups: ACTIVITY_EMOJI_GROUPS }), ['🦖'], 'one that is not is offered first')
 eq(ACTIVITY_EMOJI_GROUPS.flatMap(g => g.emoji), ACTIVITY_EMOJI, 'the grouped list is the flat one')
 eq(DEFAULT_ACTIVITIES.every(a => ACTIVITY_EMOJI.includes(a.emoji)), true, 'every starter picture is on the list')
+
+// ── Shortest allowed session ───────────────────────────────────────
+// A floor per task: homework only at half an hour, piano at twenty or
+// more. Stored as "at least this long" rather than a list of allowed
+// lengths, so it keeps meaning the same thing if the presets change.
+const homework = { minMinutes: 30 }
+const piano = { minMinutes: 20 }
+const anything = { minMinutes: 0 }
+
+eq(PRESETS.filter(m => meetsMinimum(m, homework)), [30], 'homework at 30 leaves only the half hour')
+eq(PRESETS.filter(m => meetsMinimum(m, piano)), [20, 30], 'piano at 20 leaves twenty and above')
+eq(PRESETS.filter(m => meetsMinimum(m, anything)), PRESETS, 'no floor leaves everything')
+eq(PRESETS.filter(m => meetsMinimum(m, {})), PRESETS, 'and so does a task that has never heard of one')
+
+// Anything that was never one of the offered floors is no floor: an
+// older document, a hand-edited one, a caller passing nonsense.
+eq(activityMinMinutes(undefined), NO_MINIMUM, 'no activity, no floor')
+eq(activityMinMinutes({}), NO_MINIMUM, 'nor one without the field')
+eq(activityMinMinutes({ minMinutes: null }), NO_MINIMUM, 'nor a null')
+eq(activityMinMinutes({ minMinutes: '20' }), 20, 'a number that arrived as text still counts')
+eq(activityMinMinutes({ minMinutes: 25 }), NO_MINIMUM, 'a value off the list is treated as none')
+eq(activityMinMinutes({ minMinutes: -5 }), NO_MINIMUM, 'and so is a negative one')
+eq(MIN_MINUTES_CHOICES, [0, ...PRESETS], 'the floors offered are "any" plus every preset')
+
+// Through the form's validator, which is what the screen calls.
+eq(validateActivity({ zh: '作業', minMinutes: 30 }).value.minMinutes, 30, 'a floor survives validation')
+eq(validateActivity({ zh: '作業' }).value.minMinutes, NO_MINIMUM, 'leaving it out means no floor')
+eq(validateActivity({ zh: '作業', minMinutes: 7 }).value.minMinutes, NO_MINIMUM, 'an impossible floor is dropped, not stored')
+eq(validateActivity({ zh: '', minMinutes: 30 }).ok, false, 'and a floor cannot stand in for a name')
+
+// HIIT takes its shape from the round lengths, so it carries none.
+eq(activityMinMinutes(HIIT_ACTIVITY), NO_MINIMUM, 'HIIT has no floor')
+// Starters ship unconstrained: a rule is the family's to add, not
+// something they wake up to.
+eq(DEFAULT_ACTIVITIES.every(a => activityMinMinutes(a) === NO_MINIMUM), true, 'no starter arrives with a floor')
 
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)
