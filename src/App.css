@@ -1949,3 +1949,65 @@ h1 .t-en {
     animation: none;
   }
 }
+
+/* ── Shortest allowed session ── */
+
+/* Why half the duration grid is dim. Said in the card rather than left
+   to be deduced. */
+.min-minutes-note {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-soft-ink);
+  background: var(--accent-soft);
+  border-radius: 12px;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+}
+
+.min-minutes-note .t-zh,
+.min-minutes-note .t-en {
+  display: block;
+}
+
+/* A length below the floor stays visible but plainly out of reach —
+   removing it would make the grid change shape every time a kid picked
+   a different task. */
+.preset-grid .preset-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.preset-grid .preset-btn:disabled:hover {
+  transform: none;
+}
+
+/* The floors a parent picks from, small enough that five fit a row. */
+.min-minutes-row .amount-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 10px 2px;
+  font-size: 0.8rem;
+}
+
+/* Which tasks carry a floor, readable without opening anything. */
+.activity-min {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-soft-ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.activity-min .t-zh,
+.activity-min .t-en {
+  display: inline;
+}
+
+.activity-min .t-en {
+  margin-left: 4px;
+}
