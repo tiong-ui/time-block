@@ -2011,3 +2011,137 @@ h1 .t-en {
 .activity-min .t-en {
   margin-left: 4px;
 }
+
+/* ── Two kids on a phone ──
+   A card laid out for one kid on a 390px screen is 641px tall, so the
+   second one starts below the fold and the board becomes a thing you
+   scroll rather than a thing you look at. With more than one open,
+   and only on a screen this narrow, everything on the card tightens
+   until both fit.
+
+   Nothing is removed: the same tasks, the same lengths, the same
+   words. They are just no longer sized for a screen with one card on
+   it. */
+@media (max-width: 480px) {
+  .board-crowded .focus-card {
+    padding: 10px 12px 10px;
+    border-radius: 20px;
+    gap: 2px;
+  }
+
+  /* The jar chip keeps its 44px — that floor is a child's finger, not
+     decoration — so the row shrinks by its margin instead. */
+  .board-crowded .kid-bar {
+    margin-bottom: 4px;
+  }
+
+  /* The prompts shrink but stay stacked. Putting them on one line
+     saved another seven pixels and cost the longer of the two a ragged
+     wrap, with its English half starting mid-line. */
+  .board-crowded .select-body .subtitle {
+    margin-bottom: 0;
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+
+  .board-crowded .activity-picker {
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .board-crowded .activity-chip {
+    padding: 3px 9px;
+    font-size: 0.75rem;
+  }
+
+  .board-crowded .activity-chip .t-zh,
+  .board-crowded .activity-chip .t-en {
+    display: inline;
+  }
+
+  .board-crowded .activity-chip .t-en {
+    margin-left: 4px;
+  }
+
+  /* All four lengths across one row. The number stays the biggest
+     thing on the tile, because it is what a kid is aiming at. */
+  .board-crowded .preset-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .board-crowded .preset-btn {
+    padding: 8px 2px;
+    border-radius: 14px;
+  }
+
+  .board-crowded .preset-number {
+    font-size: 1.4rem;
+  }
+
+  .board-crowded .preset-unit {
+    font-size: 0.6rem;
+    letter-spacing: 0;
+  }
+
+  .board-crowded .min-minutes-note {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+
+  .board-crowded .min-minutes-note .t-zh,
+  .board-crowded .min-minutes-note .t-en {
+    display: inline;
+  }
+
+  .board-crowded .min-minutes-note .t-en {
+    margin-left: 6px;
+  }
+
+  /* A running card has to fit beside the others too, and a dial that
+     fills the screen is no easier to read than one that doesn't. */
+  .board-crowded .pie-timer {
+    max-width: 112px;
+  }
+
+  .board-crowded .running-hint {
+    font-size: 0.85rem;
+  }
+
+  /* "Press and hold to peek" is a thing to learn once. The gesture
+     still works; only the sentence teaching it stands down, and the
+     roomy layout — one kid, the whole screen — still carries it. */
+  .board-crowded .peek-hint {
+    display: none;
+  }
+
+  .board-crowded .controls {
+    gap: 8px;
+  }
+
+  .board-crowded .controls .preset-btn {
+    padding: 10px 8px;
+  }
+
+  .board-crowded {
+    gap: 8px;
+  }
+
+  .board-crowded .board-grid {
+    gap: 10px;
+  }
+
+  /* The app's own name is the least useful thing on screen when two
+     kids are mid-choice, so it is the first thing asked to give up
+     room. Smaller rather than on one line: at any size that fits the
+     width, the title and five swatches still come to more than 390px.
+     The swatches stay on its centre line. */
+  .board-crowded .board-head h1 {
+    font-size: 1.15rem;
+  }
+
+  .board-crowded .theme-swatch {
+    width: 26px;
+    height: 26px;
+  }
+}
