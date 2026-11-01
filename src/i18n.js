@@ -133,7 +133,7 @@ export const STRINGS = {
   noMinimum: { zh: '不限', en: 'Any' },
   minutesCount: { zh: '{count} 分鐘', en: '{count} min' },
   minMinutesChip: { zh: '最少 {count} 分', en: '{count} min+' },
-  needsAtLeast: { zh: '這個項目至少要 {count} 分鐘', en: 'This one needs at least {count} minutes' },
+  needsAtLeast: { zh: '至少 {count} 分鐘', en: 'At least {count} min' },
   builtIn: { zh: '內建', en: 'Built in' },
   errLoadActivities: { zh: '讀不到項目清單{detail}，請檢查網路。', en: "Couldn't load the tasks{detail}. Check your connection." },
   errSaveActivity: { zh: '存不起來{detail}，請再試一次。', en: "Couldn't save that{detail}. Please try again." },

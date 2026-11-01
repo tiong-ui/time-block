@@ -70,8 +70,14 @@ export default function FocusBoard({
   // a card that moves is moved, not rebuilt — its timer carries on.
   const ordered = [...kids].sort((a, b) => Number(isCollapsed(a)) - Number(isCollapsed(b)))
 
+  // Two cards open at once is where a phone runs out of room. The
+  // layout tightens then, and only then: one kid on their own has the
+  // screen to themselves and may as well use it. Narrow enough to
+  // matter is CSS's call, not this one — it only says "crowded".
+  const crowded = ordered.filter(kid => !isCollapsed(kid)).length > 1
+
   return (
-    <div className="board">
+    <div className={`board${crowded ? ' board-crowded' : ''}`}>
       <header className="board-head">
         <h1><T k="focusTime" /></h1>
         <ThemePicker value={colorTheme} onChange={onColorThemeChange} />
